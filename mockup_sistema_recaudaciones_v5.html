@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Recaudaciones COLMENA — v5 Modular</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;background:#EEF2F7;color:#2D3748}
+#s-login{display:none;min-height:100vh;background:linear-gradient(135deg,#1F3864,#2E75B6);flex-direction:column;align-items:center;justify-content:center;gap:24px}
+#s-login.active{display:flex}
+#s-app{display:none;min-height:100vh}
+#s-app.active{display:flex}
+
+/* LOGIN */
+.login-logo h1{color:#fff;font-size:28px;font-weight:700;text-align:center;letter-spacing:2px}
+.login-logo p{color:rgba(255,255,255,.65);font-size:13px;text-align:center;margin-top:5px}
+.login-sub{color:rgba(255,255,255,.45);font-size:12px}
+.role-cards{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.rc{background:#fff;border-radius:12px;padding:22px 18px;width:200px;cursor:pointer;border:3px solid transparent;transition:all .2s;text-align:center;user-select:none}
+.rc:hover{transform:translateY(-4px);box-shadow:0 10px 28px rgba(0,0,0,.22)}
+.rc.sel{border-color:#48BB78;transform:translateY(-2px)}
+.rc-icon{font-size:38px;margin-bottom:10px}
+.rc-name{font-weight:700;font-size:14px;color:#1F3864;margin-bottom:2px}
+.rc-tag{font-size:11px;color:#718096;margin-bottom:10px}
+.rc-perms{text-align:left;border-top:1px solid #EEF2F7;padding-top:8px}
+.rp{font-size:11px;padding:2px 0;color:#4A5568}
+.rp.y::before{content:'✓ ';color:#48BB78;font-weight:700}
+.rp.n::before{content:'✗ ';color:#FC8181;font-weight:700}
+.btn-enter{background:#48BB78;color:#fff;border:none;padding:12px 48px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;display:none;transition:all .2s}
+.btn-enter.vis{display:inline-block}
+.btn-enter:hover{background:#38A169}
+
+/* SIDEBAR */
+.sidebar{width:228px;background:#16294D;display:flex;flex-direction:column;flex-shrink:0}
+.sb-logo{padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sb-logo .lt{color:#fff;font-weight:700;font-size:15px}
+.sb-logo .ls{color:rgba(255,255,255,.4);font-size:11px;margin-top:2px}
+.sb-sect{padding:10px 16px 3px;color:rgba(255,255,255,.28);font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:10px 16px;color:rgba(255,255,255,.7);cursor:pointer;transition:background .15s;font-size:13px;user-select:none}
+.nav-item:hover:not(.dis){background:rgba(255,255,255,.08);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.14);color:#fff;font-weight:600}
+.nav-item.dis{color:rgba(255,255,255,.25);cursor:not-allowed}
+.nav-lock{margin-left:auto;font-size:10px;opacity:.5}
+.mod-num{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;color:#fff}
+.mn1{background:#2E75B6}.mn2{background:#805AD5}.mn3{background:#38A169}.mn4{background:#2C7A7B}.mn5{background:#B7791F}.mn6{background:#4A5568}
+.sb-footer{margin-top:auto;padding:14px;border-top:1px solid rgba(255,255,255,.1)}
+.role-chip{background:rgba(255,255,255,.1);border-radius:7px;padding:8px 10px}
+.role-chip small{color:rgba(255,255,255,.4);font-size:10px;display:block;margin-bottom:2px}
+.role-chip span{color:#fff;font-size:12px;font-weight:600}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.navbar{background:#1F3864;height:52px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.nb-left{display:flex;align-items:center;gap:10px}
+.nb-title{color:#fff;font-weight:700;font-size:15px}
+.nb-mod-tag{font-size:11px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.85);padding:2px 10px;border-radius:12px}
+.nb-right{display:flex;align-items:center;gap:10px}
+.period-badge{background:rgba(255,255,255,.15);color:#fff;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.role-pill{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700;color:#fff}
+.rp-op{background:#2E75B6}.rp-cont{background:#805AD5}.rp-admin{background:#B7791F}
+.btn-logout{background:rgba(255,255,255,.15);border:none;color:rgba(255,255,255,.8);padding:5px 11px;border-radius:6px;cursor:pointer;font-size:12px}
+.btn-logout:hover{background:rgba(255,255,255,.25)}
+.content{flex:1;padding:22px;overflow-y:auto}
+.cscreen{display:none}.cscreen.active{display:block}
+
+/* MODULE HEADER */
+.mod-header{border-radius:10px;padding:16px 20px;margin-bottom:20px;color:#fff;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.mh1{background:linear-gradient(135deg,#2B6CB0,#4299E1)}
+.mh2{background:linear-gradient(135deg,#44337A,#805AD5)}
+.mh3{background:linear-gradient(135deg,#22543D,#38A169)}
+.mh4{background:linear-gradient(135deg,#1D4044,#2C7A7B)}
+.mh5{background:linear-gradient(135deg,#744210,#D69E2E)}
+.mh6{background:linear-gradient(135deg,#1A202C,#4A5568)}
+
+/* MODAL PREVIEW */
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal-box{background:#fff;border-radius:12px;width:82%;max-height:82vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-header{padding:18px 22px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-title{font-weight:700;font-size:14px;color:#1F3864}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#718096;line-height:1;padding:0 4px}
+.modal-close:hover{color:#2D3748}
+.modal-body{padding:20px 22px;overflow-y:auto}
+
+/* BUTTONS */
+.btn-danger{background:#E53E3E;color:#fff}.btn-danger:hover{background:#C53030}
+
+/* M3 REJECT */
+.ci-rejected{border-left-color:#E53E3E!important}
+.reject-form{padding-top:12px;border-top:1px solid #EEF2F7}
+.reject-textarea{width:100%;border:1px solid #E2E8F0;border-radius:6px;padding:8px 10px;font-size:13px;resize:vertical;min-height:64px;outline:none;color:#2D3748;font-family:inherit}
+.reject-textarea:focus{border-color:#E53E3E}
+.rejected-msg{display:flex;align-items:flex-start;gap:8px;color:#9B2C2C;font-size:13px;font-weight:600;padding-top:12px;border-top:1px solid #EEF2F7}
+
+/* M1 FILE STAGING */
+.fi-pend{background:#FFFFF0;border:1px solid #F6AD55}
+.fi-pend .fi-ok{background:#FEEBC8;color:#9C4221}
+.upload-actions{display:flex;align-items:center;gap:10px;margin-top:10px}
+
+/* M6 LOG */
+.log-tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}
+.ltab{padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;border:1px solid #E2E8F0;background:#fff;color:#718096;transition:all .15s}
+.ltab:hover{border-color:#4A5568;color:#4A5568}
+.ltab.active{background:#4A5568;color:#fff;border-color:#4A5568}
+.ltab-pane{display:none}.ltab-pane.active{display:block}
+.log-table{width:100%;border-collapse:collapse;font-size:12px}
+.log-table th{background:#2D3748;color:#fff;padding:8px 12px;text-align:left;font-size:11px;position:sticky;top:0}
+.log-table td{padding:8px 12px;border-bottom:1px solid #EEF2F7;vertical-align:middle}
+.log-table tr:hover td{background:#F7FAFC}
+.log-res-ok{color:#276749;font-weight:700}
+.log-res-warn{color:#9C4221;font-weight:700}
+.log-res-err{color:#9B2C2C;font-weight:700}
+.mod-tag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;color:#fff;white-space:nowrap}
+.mt-m1{background:#2E75B6}.mt-m2{background:#805AD5}.mt-m3{background:#38A169}.mt-m4{background:#2C7A7B}.mt-m5{background:#B7791F}
+.mh-left h2{font-size:15px;font-weight:700;margin-bottom:3px}
+.mh-left p{font-size:12px;opacity:.8}
+.mh-right{display:flex;gap:8px;flex-wrap:wrap}
+
+/* CARDS */
+.card{background:#fff;border-radius:10px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:14px}
+.card-title{font-weight:700;font-size:14px;color:#1F3864;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.stat-card{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid}
+.sc-blue{border-color:#2E75B6}.sc-green{border-color:#48BB78}.sc-orange{border-color:#ED8936}
+.sc-purple{border-color:#805AD5}.sc-teal{border-color:#2C7A7B}
+.stat-label{font-size:11px;color:#718096;text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:20px;font-weight:700;color:#1F3864;margin-top:3px}
+.stat-sub{font-size:11px;color:#A0AEC0;margin-top:2px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.bg-green{background:#C6F6D5;color:#276749}.bg-orange{background:#FEEBC8;color:#9C4221}
+.bg-red{background:#FED7D7;color:#9B2C2C}.bg-blue{background:#BEE3F8;color:#2C5282}
+.bg-grey{background:#E2E8F0;color:#4A5568}.bg-purple{background:#E9D8FD;color:#553C9A}
+.bg-teal{background:#B2F5EA;color:#234E52}
+
+/* MESSAGES */
+.msg{border-radius:8px;padding:12px 16px;display:flex;gap:10px;margin-bottom:14px}
+.msg-success{background:#F0FFF4;border:1px solid #9AE6B4}
+.msg-warning{background:#FFFAF0;border:1px solid #F6AD55}
+.msg-info{background:#EBF8FF;border:1px solid #90CDF4}
+.msg-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.msg-body{font-size:12px}
+.msg-body strong{display:block;font-size:13px;margin-bottom:2px}
+.msg-success .msg-body{color:#276749}
+.msg-warning .msg-body{color:#7B341E}
+.msg-info .msg-body{color:#2C5282}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;user-select:none}
+.btn-primary{background:#2E75B6;color:#fff}.btn-primary:hover{background:#2563A0}
+.btn-success{background:#48BB78;color:#fff}.btn-success:hover{background:#38A169}
+.btn-ghost{background:#fff;color:#4A5568;border:1px solid #E2E8F0}.btn-ghost:hover{background:#F7FAFC}
+.btn-teal{background:#2C7A7B;color:#fff}.btn-teal:hover{background:#1D4044}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn.dis,.btn:disabled{background:#E2E8F0!important;color:#A0AEC0!important;cursor:not-allowed!important;border-color:#E2E8F0!important}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:#1F3864;color:#fff;padding:8px 10px;text-align:left;white-space:nowrap;position:sticky;top:0;z-index:1}
+td{padding:7px 10px;border-bottom:1px solid #EEF2F7;white-space:nowrap}
+tr:hover td{background:#F7FAFC}
+.tbl-wrap{overflow:auto;max-height:240px;border-radius:8px;border:1px solid #E2E8F0;margin-bottom:14px}
+.tbl-plain th{background:#EEF2F7;color:#4A5568;position:static;font-size:11px;font-weight:700}
+
+/* M1 - CARGA */
+.rec-grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.rec-m1{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden;cursor:pointer;transition:all .15s;border:2px solid transparent}
+.rec-m1:hover{border-color:#2E75B6;transform:translateY(-2px)}
+.rec-m1.selected{border-color:#2E75B6;box-shadow:0 0 0 3px rgba(46,117,182,.12)}
+.rm1h{padding:10px 12px;color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:space-between}
+.rm1b{padding:12px}
+.rm1r{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;color:#4A5568}
+.rm1r span:last-child{font-weight:600;color:#1F3864}
+.rm1f{padding:8px 12px;border-top:1px solid #EEF2F7;min-height:38px;display:flex;align-items:center;justify-content:space-between}
+.rh-pat{background:#2E75B6}.rh-pac{background:#0987a0}.rh-tgr{background:#2C7A7B}
+.rh-prev{background:#553C9A}.rh-subs{background:#9C4221}
+.upload-zone{border:2px dashed #CBD5E0;border-radius:10px;padding:22px;text-align:center;background:#FAFAFA;cursor:pointer;transition:all .15s;margin-bottom:12px}
+.upload-zone:hover{border-color:#2E75B6;background:#EBF5FF}
+.uz-icon{font-size:28px;margin-bottom:6px}
+.uz-text{color:#718096;font-size:13px}.uz-text strong{color:#2E75B6}
+.file-list{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.fi{display:flex;align-items:center;gap:8px;background:#F7FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:7px 10px;font-size:12px}
+.fi-name{flex:1;font-weight:600;color:#2D3748}.fi-size{color:#A0AEC0}
+.fi-ok{background:#C6F6D5;color:#276749;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700}
+.fi-warn{background:#FEEBC8;color:#9C4221;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700}
+
+/* M2 - TRANSFORMACION */
+.rec-tabs{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap}
+.rtab{padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;border:1px solid #E2E8F0;background:#fff;color:#718096;transition:all .15s}
+.rtab:hover{border-color:#805AD5;color:#805AD5}
+.rtab.active{background:#805AD5;color:#fff;border-color:#805AD5}
+.rtab-pane{display:none}.rtab-pane.active{display:block}
+.trans-compare{display:grid;grid-template-columns:1fr 40px 1fr;gap:0;margin-bottom:16px;align-items:start}
+.tc-label{font-size:12px;font-weight:700;padding:7px 12px;border-radius:6px 6px 0 0;display:flex;align-items:center;gap:6px}
+.tc-before .tc-label{background:#FED7D7;color:#9B2C2C}
+.tc-after .tc-label{background:#C6F6D5;color:#276749}
+.tc-arrow{display:flex;align-items:center;justify-content:center;font-size:20px;color:#A0AEC0;padding-top:40px}
+.trans-map{background:#F7FAFC;border-radius:8px;padding:12px 14px;margin-bottom:14px}
+.trans-map-title{font-size:12px;font-weight:700;color:#1F3864;margin-bottom:8px}
+.map-row{display:flex;align-items:center;gap:10px;font-size:12px;padding:4px 0;border-bottom:1px solid #EEF2F7}
+.map-src{color:#718096;width:180px;flex-shrink:0}
+.map-arr{color:#A0AEC0}
+.map-dst{font-weight:600;color:#2D3748;flex:1}
+.map-rule{color:#805AD5;font-size:11px}
+.log-list{display:flex;flex-direction:column;gap:6px}
+.log-item{display:flex;align-items:flex-start;gap:10px;padding:8px 12px;border-radius:6px;font-size:12px;background:#F7FAFC;border-left:3px solid}
+.li-ok{border-color:#48BB78}.li-warn{border-color:#ED8936}.li-info{border-color:#4299E1}
+.li-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.li-text{flex:1;color:#4A5568}
+.li-count{font-weight:700;color:#2D3748;white-space:nowrap;font-size:11px}
+
+/* M3 - CONCILIACION */
+.cont-list{display:flex;flex-direction:column;gap:14px}
+.cont-item{background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.cont-item.ci-pend{border-left:4px solid #ED8936}
+.cont-item.ci-ok{border-left:4px solid #48BB78;opacity:.85}
+.ci-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.ci-title{font-weight:700;color:#1F3864;font-size:14px}
+.ci-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:12px}
+.ci-stat label{color:#718096;font-size:11px;display:block;margin-bottom:2px}
+.ci-stat span{font-weight:600;color:#2D3748;font-size:13px}
+.ci-form{display:flex;align-items:flex-end;gap:10px;padding-top:12px;border-top:1px solid #EEF2F7;flex-wrap:wrap}
+.fg{display:flex;flex-direction:column;gap:3px}
+.fg label{font-size:11px;color:#718096;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.fg input{border:1px solid #E2E8F0;border-radius:6px;padding:7px 10px;font-size:13px;outline:none;color:#2D3748}
+.fg input:focus{border-color:#38A169}
+.fg input.w140{width:140px}.fg input.w170{width:170px}.fg input.w200{width:200px}
+.approved-msg{display:flex;align-items:center;gap:8px;color:#276749;font-size:13px;font-weight:600;padding-top:12px;border-top:1px solid #EEF2F7}
+.comp-table td:nth-child(3){font-weight:600}
+.comp-match td:nth-child(3){color:#276749}
+.comp-diff td:nth-child(3){color:#9B2C2C}
+
+/* M4 - DATOS */
+.sub-tabs{display:flex;gap:0;border-bottom:2px solid #E2E8F0;margin-bottom:20px}
+.stab{padding:10px 20px;cursor:pointer;font-size:13px;font-weight:600;color:#718096;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;user-select:none}
+.stab:hover{color:#2C7A7B}
+.stab.active{color:#2C7A7B;border-bottom-color:#2C7A7B}
+.stab-pane{display:none}.stab-pane.active{display:block}
+.cons-item{background:#fff;border-radius:10px;padding:14px 18px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:10px;display:flex;align-items:center;gap:14px}
+.cons-icon{font-size:30px;flex-shrink:0}
+.cons-info{flex:1}
+.cons-name{font-weight:700;color:#1F3864;font-size:13px;margin-bottom:4px}
+.cons-meta{font-size:12px;color:#718096;display:flex;gap:14px;flex-wrap:wrap}
+.cons-meta span strong{color:#2D3748}
+.cons-actions{display:flex;gap:8px;flex-shrink:0}
+.dl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.dl-card{background:#fff;border-radius:10px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.08);text-align:center;border:2px solid #E2E8F0;transition:all .15s}
+.dl-card:hover{border-color:#2C7A7B;transform:translateY(-2px)}
+.dl-icon{font-size:30px;margin-bottom:8px}
+.dl-name{font-weight:700;font-size:13px;color:#1F3864;margin-bottom:3px}
+.dl-meta{font-size:11px;color:#718096;margin-bottom:12px}
+
+/* M5 - PERFILES */
+.role-ref-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:18px}
+.rref{border-radius:10px;padding:18px;border:2px solid}
+.rr-op{border-color:#2E75B6;background:#EBF5FF}.rr-cont{border-color:#805AD5;background:#FAF5FF}.rr-admin{border-color:#D69E2E;background:#FFFFF0}
+.rr-icon{font-size:32px;margin-bottom:8px}
+.rr-name{font-weight:700;font-size:14px;margin-bottom:10px}
+.rr-op .rr-name{color:#2C5282}.rr-cont .rr-name{color:#553C9A}.rr-admin .rr-name{color:#744210}
+.perm-table{width:100%;border-collapse:collapse;font-size:12px}
+.perm-table th{padding:10px 14px;text-align:left;border-bottom:2px solid #E2E8F0;font-weight:700;color:#1F3864;font-size:12px}
+.perm-table td{padding:9px 14px;border-bottom:1px solid #EEF2F7}
+.perm-table tr:hover td{background:#F7FAFC}
+.py{color:#276749;font-weight:700}.pn{color:#9B2C2C}
+.user-table{width:100%;border-collapse:collapse;font-size:13px}
+.user-table th{background:#1F3864;color:#fff;padding:10px 14px;text-align:left;font-size:12px}
+.user-table td{padding:10px 14px;border-bottom:1px solid #EEF2F7}
+.user-table tr:hover td{background:#F7FAFC}
+
+/* UTILS */
+.flex{display:flex}.fc{display:flex;align-items:center}.fb{display:flex;align-items:center;justify-content:space-between}
+.gap-8{gap:8px}.gap-12{gap:12px}.gap-16{gap:16px}
+.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}.mb-16{margin-bottom:16px}.mb-20{margin-bottom:20px}
+.mt-8{margin-top:8px}.mt-12{margin-top:12px}
+.text-sm{font-size:12px}.text-xs{font-size:11px}.text-muted{color:#718096}.fw-bold{font-weight:700}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+
+[data-tip]{position:relative}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#2D3748;color:#fff;padding:5px 9px;border-radius:5px;font-size:11px;white-space:nowrap;z-index:999;pointer-events:none}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ LOGIN ═══════════════════════ -->
+<div id="s-login">
+  <div class="login-logo">
+    <h1>COLMENA</h1>
+    <p>Sistema de Recaudaciones &middot; Isapre Colmena Golden Cross</p>
+  </div>
+  <div class="login-sub">Selecciona tu perfil para continuar</div>
+  <div class="role-cards">
+    <div class="rc" onclick="selRole('op')" id="rc-op">
+      <div class="rc-icon">📋</div>
+      <div class="rc-name">Operaciones</div>
+      <div class="rc-tag">Recaudacion</div>
+      <div class="rc-perms">
+        <div class="rp y">M1 · Cargar archivos</div>
+        <div class="rp y">M2 · Ver transformacion</div>
+        <div class="rp y">M4 · Ver datos y Matriz</div>
+        <div class="rp n">M3 · Aprobar conciliacion</div>
+        <div class="rp n">M5 · Administrar usuarios</div>
+      </div>
+    </div>
+    <div class="rc" onclick="selRole('cont')" id="rc-cont">
+      <div class="rc-icon">🧾</div>
+      <div class="rc-name">Contabilidad</div>
+      <div class="rc-tag">Conciliacion</div>
+      <div class="rc-perms">
+        <div class="rp y">M3 · Aprobar conciliacion</div>
+        <div class="rp y">M4 · Ver datos y Matriz</div>
+        <div class="rp y">M2 · Ver transformacion</div>
+        <div class="rp n">M1 · Cargar archivos</div>
+        <div class="rp n">M5 · Administrar usuarios</div>
+      </div>
+    </div>
+    <div class="rc" onclick="selRole('admin')" id="rc-admin">
+      <div class="rc-icon">⚙️</div>
+      <div class="rc-name">Administrador</div>
+      <div class="rc-tag">Acceso total</div>
+      <div class="rc-perms">
+        <div class="rp y">M1 · Cargar archivos</div>
+        <div class="rp y">M3 · Aprobar conciliacion</div>
+        <div class="rp y">M4 · Ver datos y Matriz</div>
+        <div class="rp y">M5 · Administrar usuarios</div>
+        <div class="rp y">Todos los modulos</div>
+      </div>
+    </div>
+  </div>
+  <button class="btn-enter" id="btn-enter" onclick="enterApp()">Ingresar &rarr;</button>
+</div>
+
+<!-- ═══════════════════════ APP ═══════════════════════ -->
+<div id="s-app">
+  <div class="sidebar">
+    <div class="sb-logo">
+      <div class="lt">COLMENA</div>
+      <div class="ls">Sistema Recaudaciones 2025</div>
+    </div>
+    <div class="sb-sect">Modulos</div>
+    <div class="nav-item active" onclick="goTo('m1')" id="ni-m1"><span class="mod-num mn1">1</span>Carga de Archivos</div>
+    <div class="nav-item" onclick="goTo('m2')" id="ni-m2"><span class="mod-num mn2">2</span>Limpieza y Transform.</div>
+    <div class="nav-item" onclick="navM3()" id="ni-m3"><span class="mod-num mn3">3</span>Conciliacion</div>
+    <div class="nav-item" onclick="goTo('m4')" id="ni-m4"><span class="mod-num mn4">4</span>Datos y Vistas</div>
+    <div class="nav-item" onclick="navM5()" id="ni-m5"><span class="mod-num mn5">5</span>Perfiles</div>
+    <div class="nav-item" onclick="goTo('m6')" id="ni-m6"><span class="mod-num mn6">6</span>Log del Sistema</div>
+    <div class="sb-footer">
+      <div class="role-chip">
+        <small>Conectado como</small>
+        <span id="chip-lbl">—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="navbar">
+      <div class="nb-left">
+        <div class="nb-title" id="nb-title">Carga de Archivos</div>
+        <span class="nb-mod-tag" id="nb-mod">M1</span>
+      </div>
+      <div class="nb-right">
+        <span class="period-badge">Periodo 202511</span>
+        <span class="role-pill" id="role-pill">—</span>
+        <button class="btn-logout" onclick="logout()">Salir</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ═══════════════════════════════════════
+           M1 · CARGA DE ARCHIVOS
+      ═══════════════════════════════════════ -->
+      <div id="m1" class="cscreen active">
+        <div class="mod-header mh1">
+          <div class="mh-left">
+            <h2>Modulo 1 &mdash; Carga de Archivos</h2>
+            <p>Sube los archivos fuente de cada recaudador para el periodo 202511</p>
+          </div>
+          <div class="mh-right">
+            <span class="badge" style="background:rgba(255,255,255,.2);color:#fff">4 de 5 cargados</span>
+            <span class="badge" style="background:rgba(255,255,255,.2);color:#fff">1 pendiente upload</span>
+          </div>
+        </div>
+
+        <div class="rec-grid-5">
+          <!-- PAT -->
+          <div class="rec-m1 selected" onclick="selectRec('pat')">
+            <div class="rm1h rh-pat">PAT <span style="opacity:.75;font-weight:400;font-size:10px">Tarjeta</span></div>
+            <div class="rm1b">
+              <div class="rm1r"><span>Archivos</span><span>4 / 4</span></div>
+              <div class="rm1r"><span>Registros</span><span>12.847</span></div>
+              <div class="rm1r"><span>Cargado</span><span>Ayer 14:20</span></div>
+            </div>
+            <div class="rm1f"><span class="badge bg-orange">⏳ Pend. M3</span></div>
+          </div>
+          <!-- PAC -->
+          <div class="rec-m1" onclick="selectRec('pac')">
+            <div class="rm1h rh-pac">PAC <span style="opacity:.75;font-weight:400;font-size:10px">Cuenta</span></div>
+            <div class="rm1b">
+              <div class="rm1r"><span>Archivos</span><span>9 bancos</span></div>
+              <div class="rm1r"><span>Registros</span><span>18.923</span></div>
+              <div class="rm1r"><span>Cargado</span><span>Hoy 09:15</span></div>
+            </div>
+            <div class="rm1f"><span class="badge bg-green">✅ En Matriz</span></div>
+          </div>
+          <!-- TGR -->
+          <div class="rec-m1" onclick="selectRec('tgr')">
+            <div class="rm1h rh-tgr">TGR <span style="opacity:.75;font-weight:400;font-size:10px">Tesoreria</span></div>
+            <div class="rm1b">
+              <div class="rm1r"><span>Archivos</span><span>1 (.dat)</span></div>
+              <div class="rm1r"><span>Registros</span><span>3.102</span></div>
+              <div class="rm1r"><span>Cargado</span><span>03/03/2026</span></div>
+            </div>
+            <div class="rm1f"><span class="badge bg-orange">⏳ Pend. M3</span></div>
+          </div>
+          <!-- Previred -->
+          <div class="rec-m1" onclick="selectRec('prev')">
+            <div class="rm1h rh-prev">Previred <span style="opacity:.75;font-weight:400;font-size:10px">Planilla</span></div>
+            <div class="rm1b">
+              <div class="rm1r"><span>Archivos</span><span>1</span></div>
+              <div class="rm1r"><span>Registros</span><span>8.214</span></div>
+              <div class="rm1r"><span>Cargado</span><span>04/03/2026</span></div>
+            </div>
+            <div class="rm1f"><span class="badge bg-green">✅ En Matriz</span></div>
+          </div>
+          <!-- Subsidios -->
+          <div class="rec-m1" onclick="selectRec('subs')">
+            <div class="rm1h rh-subs">Subsidios <span style="opacity:.75;font-weight:400;font-size:10px">Licencias</span></div>
+            <div class="rm1b" style="text-align:center;padding:18px 12px">
+              <div style="font-size:26px;margin-bottom:6px">📁</div>
+              <div class="text-xs text-muted">Sin archivos aun</div>
+            </div>
+            <div class="rm1f"><span class="badge bg-grey">Pendiente carga</span></div>
+          </div>
+        </div>
+
+        <!-- Panel de carga — PAT seleccionado por defecto -->
+        <div class="card" id="upload-panel">
+          <div class="card-title">
+            <span>📤 PAT &mdash; Pago Automatico Tarjeta &middot; Carpeta: PAC-PAT 2025/PAT/11-2025/</span>
+            <span class="badge bg-orange">⏳ Pendiente conciliacion</span>
+          </div>
+
+          <div class="grid-2 mb-12">
+            <!-- Columna izquierda: archivos ya cargados + selector + staging -->
+            <div>
+              <div class="fw-bold text-sm mb-8" style="color:#1F3864">Archivos ya cargados</div>
+              <div class="file-list" id="files-loaded">
+                <div class="fi"><span>📄</span><span class="fi-name">CARGO_PAT_202511.TXT</span><span class="fi-size">2.1 MB</span><span class="fi-ok">OK</span></div>
+                <div class="fi"><span>📄</span><span class="fi-name">R1_PAT_202511.TXT</span><span class="fi-size">1.8 MB</span><span class="fi-ok">OK</span></div>
+                <div class="fi"><span>📄</span><span class="fi-name">R2_PAT_202511.TXT</span><span class="fi-size">1.1 MB</span><span class="fi-ok">OK</span></div>
+                <div class="fi"><span>📄</span><span class="fi-name">R3_PAT_202511.TXT</span><span class="fi-size">0.6 MB</span><span class="fi-ok">OK</span></div>
+              </div>
+
+              <div class="fw-bold text-sm mb-8 mt-8" style="color:#1F3864">Agregar nuevos archivos</div>
+              <div class="upload-zone" onclick="document.getElementById('file-input-m1').click()">
+                <div class="uz-icon">📂</div>
+                <div class="uz-text"><strong>Haz clic para seleccionar</strong> o arrastra aqui</div>
+                <div class="uz-text text-xs mt-8" style="color:#A0AEC0">Formatos permitidos: .TXT .DAT .XLS .XLSX</div>
+              </div>
+              <input type="file" id="file-input-m1" style="display:none" multiple accept=".txt,.dat,.xls,.xlsx" onchange="stagearArchivos(this)">
+
+              <!-- Area de staging (archivos seleccionados, pendientes de cargar) -->
+              <div id="staging-area" style="display:none">
+                <div class="fw-bold text-sm mb-8" style="color:#9C4221">Archivos seleccionados (pendiente carga)</div>
+                <div class="file-list" id="files-staging"></div>
+                <div class="upload-actions">
+                  <button class="btn btn-primary" id="btn-cargar-m1" onclick="cargarArchivos()">📤 Cargar archivos</button>
+                  <button class="btn btn-ghost btn-sm" onclick="cancelarStaging()">Cancelar</button>
+                  <span class="text-xs text-muted" id="staging-count"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Columna derecha: especificaciones -->
+            <div>
+              <div class="fw-bold text-sm mb-8" style="color:#1F3864">Especificaciones del formato</div>
+              <div style="background:#F7FAFC;border-radius:8px;padding:12px;font-size:12px">
+                <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #EEF2F7"><span class="text-muted">Tipo</span><span class="fw-bold">.TXT latin-1 · delimitador ;</span></div>
+                <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #EEF2F7"><span class="text-muted">Campos clave</span><span class="fw-bold">[1] contrato [8] rut [11] monto [12] cod</span></div>
+                <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #EEF2F7"><span class="text-muted">Orden reintentos</span><span class="fw-bold">CARGO &rarr; R1 &rarr; R2 &rarr; R3</span></div>
+                <div style="display:flex;justify-content:space-between;padding:4px 0"><span class="text-muted">Script</span><span class="fw-bold">consolidar_pat.py</span></div>
+              </div>
+              <div class="msg msg-info mt-8" style="margin-bottom:0">
+                <div class="msg-icon">ℹ️</div>
+                <div class="msg-body">
+                  <strong>Proximos pasos</strong>
+                  Cargados los archivos &rarr; <b>M2</b> transformacion &rarr; <b>M3</b> conciliacion.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /m1 -->
+
+
+      <!-- ═══════════════════════════════════════
+           M2 · LIMPIEZA Y TRANSFORMACION
+      ═══════════════════════════════════════ -->
+      <div id="m2" class="cscreen">
+        <div class="mod-header mh2">
+          <div class="mh-left">
+            <h2>Modulo 2 &mdash; Limpieza y Transformacion</h2>
+            <p>Normalizacion de datos: RUT 11-chars, fechas datetime, montos CLP enteros, mapeo a 58 columnas</p>
+          </div>
+          <div class="mh-right">
+            <span class="badge" style="background:rgba(255,255,255,.2);color:#fff">4 recaudadores procesados</span>
+          </div>
+        </div>
+
+        <div class="rec-tabs">
+          <div class="rtab active" onclick="showRTab(this,'rt-pat')">💳 PAT</div>
+          <div class="rtab" onclick="showRTab(this,'rt-pac')">🏦 PAC</div>
+          <div class="rtab" onclick="showRTab(this,'rt-tgr')">🏛️ TGR</div>
+          <div class="rtab" onclick="showRTab(this,'rt-prev')">📋 Previred</div>
+          <div class="rtab" onclick="showRTab(this,'rt-subs')" style="opacity:.5;cursor:not-allowed" data-tip="Sin archivos cargados">🏥 Subsidios</div>
+        </div>
+
+        <!-- PAT -->
+        <div id="rt-pat" class="rtab-pane active">
+          <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+            <div class="stat-card sc-purple"><div class="stat-label">Registros entrada</div><div class="stat-value">12.847</div><div class="stat-sub">4 archivos TXT</div></div>
+            <div class="stat-card sc-green"><div class="stat-label">Registros validos</div><div class="stat-value">12.102</div><div class="stat-sub">94.2% del total</div></div>
+            <div class="stat-card sc-orange"><div class="stat-label">Rechazados</div><div class="stat-value">742</div><div class="stat-sub">Monto $0 o cod != 0</div></div>
+            <div class="stat-card sc-blue"><div class="stat-label">Reglas aplicadas</div><div class="stat-value">6</div><div class="stat-sub">Todas exitosas</div></div>
+          </div>
+
+          <!-- Before / After -->
+          <div class="card">
+            <div class="card-title">Comparacion: datos origen vs Matriz de Recaudaciones</div>
+            <div class="trans-compare">
+              <div class="tc-before">
+                <div class="tc-label">📥 Origen — CARGO_PAT_202511.TXT (raw)</div>
+                <div class="tbl-wrap" style="margin-top:0;border-radius:0 0 8px 8px">
+                  <table>
+                    <tr><th>[1] nro_contrato</th><th>[8] rut</th><th>[11] monto</th><th>[12] cod</th><th>[16] fecha</th></tr>
+                    <tr><td>1082341</td><td>12345678-9</td><td>00187500</td><td>0</td><td>05122025</td></tr>
+                    <tr><td>1082342</td><td>1.612.099-5</td><td>00234000</td><td>0</td><td>12112025</td></tr>
+                    <tr><td>1082343</td><td>30842979</td><td>00000000</td><td>76</td><td>18112025</td></tr>
+                    <tr><td>1082344</td><td>011625199K</td><td>00412500</td><td>0</td><td>01122025</td></tr>
+                    <tr><td>1082345</td><td>9876543-2</td><td>00521000</td><td>0</td><td>05122025</td></tr>
+                    <tr><td>1082346</td><td>4567891-1</td><td>00298000</td><td>107</td><td>08112025</td></tr>
+                  </table>
+                </div>
+              </div>
+              <div class="tc-arrow">&rarr;</div>
+              <div class="tc-after">
+                <div class="tc-label">📤 Matriz — columnas normalizadas (58 cols)</div>
+                <div class="tbl-wrap" style="margin-top:0;border-radius:0 0 8px 8px">
+                  <table>
+                    <tr><th>[3] Rut Afiliado</th><th>[18] PERCOT</th><th>[19] Monto pagado</th><th>[44] Cod PAT</th><th>[39] Fecha pago</th></tr>
+                    <tr><td style="color:#276749;font-weight:600">012345678-9</td><td>202512</td><td>$187.500</td><td>0</td><td>05/12/2025</td></tr>
+                    <tr><td style="color:#276749;font-weight:600">001612099-5</td><td>202511</td><td>$234.000</td><td>0</td><td>12/11/2025</td></tr>
+                    <tr><td style="color:#276749;font-weight:600">003084297-9</td><td>202511</td><td style="color:#9C4221">$0</td><td style="color:#9C4221">76</td><td>18/11/2025</td></tr>
+                    <tr><td style="color:#276749;font-weight:600">011625199-K</td><td>202512</td><td>$412.500</td><td>0</td><td>01/12/2025</td></tr>
+                    <tr><td style="color:#276749;font-weight:600">009876543-2</td><td>202512</td><td>$521.000</td><td>0</td><td>05/12/2025</td></tr>
+                    <tr><td style="color:#276749;font-weight:600">004567891-1</td><td>202511</td><td style="color:#9C4221">$0</td><td style="color:#9C4221">107</td><td>08/11/2025</td></tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Mapeo de campos -->
+            <div class="trans-map">
+              <div class="trans-map-title">Reglas de transformacion aplicadas</div>
+              <div class="map-row"><span class="map-src">campo [8] rut</span><span class="map-arr">&rarr;</span><span class="map-dst">col [3] Rut Afiliado</span><span class="map-rule">zfill(9) + '-' + DV &rarr; 11 chars</span></div>
+              <div class="map-row"><span class="map-src">campo [16] fecha DDMMYYYY</span><span class="map-arr">&rarr;</span><span class="map-dst">col [39] fecha de pago</span><span class="map-rule">datetime DD/MM/YYYY</span></div>
+              <div class="map-row"><span class="map-src">f'{fecha[4:8]}{fecha[2:4]}'</span><span class="map-arr">&rarr;</span><span class="map-dst">col [18] PERCOT</span><span class="map-rule">YYYYMM int</span></div>
+              <div class="map-row"><span class="map-src">campo [11] monto str</span><span class="map-arr">&rarr;</span><span class="map-dst">col [19] Monto pagado</span><span class="map-rule">int CLP (00000000 &rarr; 0)</span></div>
+              <div class="map-row"><span class="map-src">campo [12] cod_respuesta</span><span class="map-arr">&rarr;</span><span class="map-dst">col [44] CodigoAceptacion</span><span class="map-rule">int</span></div>
+              <div class="map-row"><span class="map-src">campo [17] glosa</span><span class="map-arr">&rarr;</span><span class="map-dst">col [45] Motivos rechazo</span><span class="map-rule">str (vacio si aprobado)</span></div>
+            </div>
+          </div>
+
+          <!-- Log -->
+          <div class="card">
+            <div class="card-title">Log de procesamiento &mdash; PAT 202511</div>
+            <div class="log-list">
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">RUT normalizado a 11 chars formato BBBBBBBBB-D</span><span class="li-count">12.847 regs</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">Fechas DDMMYYYY convertidas a datetime</span><span class="li-count">12.847 regs</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">PERCOT derivado de fecha (YYYYMM int)</span><span class="li-count">12.847 regs</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">Montos convertidos a entero CLP</span><span class="li-count">12.847 regs</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">Columna Recaudador fijada: 'PAT'</span><span class="li-count">12.847 regs</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">Intento detectado por nombre de archivo (CARGO / R1 / R2 / R3)</span><span class="li-count">4 archivos</span></div>
+              <div class="log-item li-warn"><span class="li-icon">⚠️</span><span class="li-text">Registros con cod_respuesta != 0 (rechazados): 76, 107, 51, 11, 16, 114</span><span class="li-count">742 regs</span></div>
+              <div class="log-item li-warn"><span class="li-icon">⚠️</span><span class="li-text">Registros con monto $0 (INST. INCOMPLETA o INST. CON BAJA)</span><span class="li-count">3 regs</span></div>
+              <div class="log-item li-info"><span class="li-icon">ℹ️</span><span class="li-text">Output generado: Matriz_PAT_11-2025.xlsx (58 columnas, header fila 2)</span><span class="li-count">12.847 filas</span></div>
+            </div>
+          </div>
+        </div><!-- /rt-pat -->
+
+        <!-- PAC (simplificado) -->
+        <div id="rt-pac" class="rtab-pane">
+          <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+            <div class="stat-card sc-purple"><div class="stat-label">Registros entrada</div><div class="stat-value">19.582</div><div class="stat-sub">9 bancos · multi-formato</div></div>
+            <div class="stat-card sc-green"><div class="stat-label">Registros validos</div><div class="stat-value">18.923</div><div class="stat-sub">96.6% del total</div></div>
+            <div class="stat-card sc-orange"><div class="stat-label">Rechazados</div><div class="stat-value">659</div><div class="stat-sub">Fondos insuf. / expirado</div></div>
+            <div class="stat-card sc-blue"><div class="stat-label">Bancos procesados</div><div class="stat-value">9 / 11</div><div class="stat-sub">BCI, BICE, Chile, Itau...</div></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Log de procesamiento &mdash; PAC 202511</div>
+            <div class="log-list">
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">Multiples formatos detectados: .TXT, .DAT, .XLS, .XLSX</span><span class="li-count">9 bancos</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">RUT normalizado a 11 chars BBBBBBBBB-D</span><span class="li-count">19.582 regs</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">Reintentos detectados y consolidados: CI &rarr; R1 &rarr; R2 &rarr; R3</span><span class="li-count">19.582 regs</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">Recaudador fijado: 'PAC-PAT'</span><span class="li-count">18.923 regs validos</span></div>
+              <div class="log-item li-warn"><span class="li-icon">⚠️</span><span class="li-text">Corpbanca y Bco. Desarrollo sin archivos este periodo</span><span class="li-count">2 bancos</span></div>
+              <div class="log-item li-warn"><span class="li-icon">⚠️</span><span class="li-text">659 registros rechazados (fondos insuficientes / cuenta cerrada)</span><span class="li-count">659 regs</span></div>
+              <div class="log-item li-info"><span class="li-icon">ℹ️</span><span class="li-text">Output: Matriz_PAC_11-2025.xlsx · 58 columnas · Recaudador = 'PAC-PAT'</span><span class="li-count">18.923 filas</span></div>
+            </div>
+          </div>
+        </div><!-- /rt-pac -->
+
+        <!-- TGR -->
+        <div id="rt-tgr" class="rtab-pane">
+          <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+            <div class="stat-card sc-purple"><div class="stat-label">Registros entrada</div><div class="stat-value">3.102</div><div class="stat-sub">1 archivo .dat</div></div>
+            <div class="stat-card sc-green"><div class="stat-label">Registros validos</div><div class="stat-value">3.102</div><div class="stat-sub">100% del total</div></div>
+            <div class="stat-card sc-orange"><div class="stat-label">Rechazados</div><div class="stat-value">0</div><div class="stat-sub">Sin rechazos</div></div>
+            <div class="stat-card sc-blue"><div class="stat-label">Reglas aplicadas</div><div class="stat-value">5</div><div class="stat-sub">Todas exitosas</div></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Comparacion origen vs Matriz &mdash; TGR</div>
+            <div class="trans-compare">
+              <div class="tc-before">
+                <div class="tc-label">📥 Noviembre 2025.dat (largo fijo 330 chars)</div>
+                <div class="tbl-wrap" style="margin-top:0;border-radius:0 0 8px 8px">
+                  <table>
+                    <tr><th>chars 1-11 rut</th><th>chars 12-61 nombres</th><th>chars 235-249 monto</th></tr>
+                    <tr><td>01234567890</td><td>VALDES PEREZ JUAN    </td><td>000000187500</td></tr>
+                    <tr><td>01817394100</td><td>GARCIA LOPEZ MARIA   </td><td>000000234000</td></tr>
+                    <tr><td>00987654300</td><td>MORALES DIAZ PEDRO   </td><td>000000412500</td></tr>
+                    <tr><td>00456789100</td><td>REYES FUENTES ANA    </td><td>000000298000</td></tr>
+                  </table>
+                </div>
+              </div>
+              <div class="tc-arrow">&rarr;</div>
+              <div class="tc-after">
+                <div class="tc-label">📤 Matriz normalizada</div>
+                <div class="tbl-wrap" style="margin-top:0;border-radius:0 0 8px 8px">
+                  <table>
+                    <tr><th>[3] Rut Afiliado</th><th>[5] nombre completo</th><th>[19] Monto pagado</th></tr>
+                    <tr><td style="color:#276749;font-weight:600">012345678-9</td><td>VALDES PEREZ JUAN</td><td>$187.500</td></tr>
+                    <tr><td style="color:#276749;font-weight:600">018173941-K</td><td>GARCIA LOPEZ MARIA</td><td>$234.000</td></tr>
+                    <tr><td style="color:#276749;font-weight:600">009876543-2</td><td>MORALES DIAZ PEDRO</td><td>$412.500</td></tr>
+                    <tr><td style="color:#276749;font-weight:600">004567891-1</td><td>REYES FUENTES ANA</td><td>$298.000</td></tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div class="log-list mt-12">
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">Parsing largo fijo: chars 1-11 rut &middot; 12-61 nombres &middot; 235-249 monto</span><span class="li-count">3.102 regs</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">RUT normalizado a 11 chars (strip + zfill)</span><span class="li-count">3.102 regs</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">Nombre completo: apellido_pat + apellido_mat + nombres</span><span class="li-count">3.102 regs</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">PERCOT derivado del nombre del archivo: 'Noviembre 2025' &rarr; 202511</span><span class="li-count">3.102 regs</span></div>
+              <div class="log-item li-info"><span class="li-icon">ℹ️</span><span class="li-text">Output: Matriz_TGR_202511.xlsx · Recaudador = 'TGR'</span><span class="li-count">3.102 filas</span></div>
+            </div>
+          </div>
+        </div><!-- /rt-tgr -->
+
+        <!-- Previred -->
+        <div id="rt-prev" class="rtab-pane">
+          <div class="card">
+            <div class="card-title">Log de procesamiento &mdash; Previred 202511</div>
+            <div class="log-list">
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">Tipos de registro: 0=header 1=enc.declaracion 2=pagador 3=detalle 4=resumen</span><span class="li-count">8.214 tipo-3</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">Encoding detectado: utf-8 (fallback latin-1/cp1252 no requerido)</span><span class="li-count">8.214 regs</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">RUT afiliado (registro tipo-3) normalizado a 11 chars</span><span class="li-count">8.214 regs</span></div>
+              <div class="log-item li-ok"><span class="li-icon">✅</span><span class="li-text">RUT empleador (registro tipo-1) vinculado por folio planilla</span><span class="li-count">8.214 regs</span></div>
+              <div class="log-item li-warn"><span class="li-icon">⚠️</span><span class="li-text">157 registros con representante legal: cod cambio = 1 (cambio reciente)</span><span class="li-count">157 regs</span></div>
+              <div class="log-item li-info"><span class="li-icon">ℹ️</span><span class="li-text">Output: Casosprevired.xlsx · Recaudador = 'PREVIRED'</span><span class="li-count">8.214 filas</span></div>
+            </div>
+          </div>
+        </div><!-- /rt-prev -->
+
+        <!-- Subsidios -->
+        <div id="rt-subs" class="rtab-pane">
+          <div class="msg msg-warning">
+            <div class="msg-icon">⚠️</div>
+            <div class="msg-body"><strong>Sin archivos cargados</strong>Primero carga los archivos en M1 para ver la transformacion de Subsidios.</div>
+          </div>
+        </div>
+
+      </div><!-- /m2 -->
+
+
+      <!-- ═══════════════════════════════════════
+           M3 · CONCILIACION
+      ═══════════════════════════════════════ -->
+      <div id="m3" class="cscreen">
+        <div class="mod-header mh3">
+          <div class="mh-left">
+            <h2>Modulo 3 &mdash; Conciliacion</h2>
+            <p>Contabilidad verifica que lo recaudado en sistema coincide con los movimientos en cuenta corriente Colmena</p>
+          </div>
+          <div class="mh-right">
+            <span class="badge" style="background:rgba(255,255,255,.2);color:#fff">2 pendientes aprobacion</span>
+            <span class="badge" style="background:rgba(255,255,255,.2);color:#fff">2 aprobados</span>
+          </div>
+        </div>
+
+        <div class="msg msg-success">
+          <div class="msg-icon">✅</div>
+          <div class="msg-body">
+            <strong>Ultima validacion &mdash; Hoy 10:42 &middot; Maria Fernandez</strong>
+            Se cargaron <b>18.923 lineas</b> con <b>$3.891.560.000</b> en Matriz RCD &mdash; PAC &middot; Ref: OC-2025-1142
+            <span class="badge bg-purple" style="margin-left:4px">Contabilidad</span>
+          </div>
+        </div>
+
+        <div class="cont-list">
+
+          <!-- PAT - Pendiente -->
+          <div class="cont-item ci-pend" id="ci-pat">
+            <div class="ci-header">
+              <div class="ci-title">💳 PAT &mdash; Pago Automatico Tarjeta</div>
+              <div class="fc gap-8 flex-wrap">
+                <span class="badge bg-orange" id="badge-pat">⏳ Pendiente aprobacion</span>
+                <span class="badge bg-blue">Periodo 202511</span>
+                <span class="badge bg-grey">Cargado ayer 14:20 · Juan Valdes</span>
+              </div>
+            </div>
+            <div class="ci-stats">
+              <div class="ci-stat"><label>Registros sistema</label><span>12.847</span></div>
+              <div class="ci-stat"><label>Monto sistema</label><span>$2.341.280.000</span></div>
+              <div class="ci-stat"><label>Tasa aprobacion</label><span>94.2%</span></div>
+              <div class="ci-stat"><label>Archivos</label><span>CARGO · R1 · R2 · R3</span></div>
+            </div>
+            <div id="form-pat">
+              <div class="ci-form">
+                <div class="fg"><label>Referencia contable</label><input type="text" class="w140" placeholder="Ej: OC-2025-1143" id="ref-pat"></div>
+                <div class="fg"><label>Monto cuenta corriente ($)</label><input type="number" class="w170" placeholder="2341280000" id="monto-pat"></div>
+                <div class="fg"><label>N&deg; registros banco</label><input type="number" class="w140" placeholder="12847" id="regs-pat"></div>
+                <div class="fg"><label>Archivo prueba (PDF)</label><input type="text" class="w200" placeholder="conciliacion_PAT_202511.pdf" id="prueba-pat"></div>
+                <button class="btn btn-success" id="btn-ap-pat" onclick="aprobar('pat')">✓ Aprobar y liberar a Matriz</button>
+                <button class="btn btn-danger" id="btn-rech-pat" onclick="mostrarRechazo('pat')">✗ Rechazar</button>
+              </div>
+              <div class="reject-form" id="rform-pat" style="display:none">
+                <div class="fw-bold text-sm mb-8" style="color:#9B2C2C">Motivo de rechazo</div>
+                <textarea class="reject-textarea" id="motivo-pat" placeholder="Describe el motivo del rechazo (ej: monto no coincide con estado de cuenta, diferencia de $1.240.000 al 05/11/2025)..."></textarea>
+                <div class="upload-actions mt-8">
+                  <button class="btn btn-danger btn-sm" onclick="confirmarRechazo('pat')">Confirmar rechazo</button>
+                  <button class="btn btn-ghost btn-sm" onclick="cancelarRechazo('pat')">Cancelar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TGR - Pendiente -->
+          <div class="cont-item ci-pend" id="ci-tgr">
+            <div class="ci-header">
+              <div class="ci-title">🏛️ TGR &mdash; Tesoreria General de la Republica</div>
+              <div class="fc gap-8 flex-wrap">
+                <span class="badge bg-orange" id="badge-tgr">⏳ Pendiente aprobacion</span>
+                <span class="badge bg-blue">Periodo 202511</span>
+                <span class="badge bg-grey">Cargado 03/03/2026 · Juan Valdes</span>
+              </div>
+            </div>
+            <div class="ci-stats">
+              <div class="ci-stat"><label>Registros sistema</label><span>3.102</span></div>
+              <div class="ci-stat"><label>Monto sistema</label><span>$891.340.000</span></div>
+              <div class="ci-stat"><label>Tasa aprobacion</label><span>100%</span></div>
+              <div class="ci-stat"><label>Archivo</label><span>Noviembre 2025.dat</span></div>
+            </div>
+            <div id="form-tgr">
+              <div class="ci-form">
+                <div class="fg"><label>Referencia contable</label><input type="text" class="w140" placeholder="Ej: OC-2025-1144" id="ref-tgr"></div>
+                <div class="fg"><label>Monto cuenta corriente ($)</label><input type="number" class="w170" placeholder="891340000" id="monto-tgr"></div>
+                <div class="fg"><label>N&deg; registros banco</label><input type="number" class="w140" placeholder="3102" id="regs-tgr"></div>
+                <div class="fg"><label>Archivo prueba (PDF)</label><input type="text" class="w200" placeholder="conciliacion_TGR_202511.pdf" id="prueba-tgr"></div>
+                <button class="btn btn-success" id="btn-ap-tgr" onclick="aprobar('tgr')">✓ Aprobar y liberar a Matriz</button>
+                <button class="btn btn-danger" id="btn-rech-tgr" onclick="mostrarRechazo('tgr')">✗ Rechazar</button>
+              </div>
+              <div class="reject-form" id="rform-tgr" style="display:none">
+                <div class="fw-bold text-sm mb-8" style="color:#9B2C2C">Motivo de rechazo</div>
+                <textarea class="reject-textarea" id="motivo-tgr" placeholder="Describe el motivo del rechazo..."></textarea>
+                <div class="upload-actions mt-8">
+                  <button class="btn btn-danger btn-sm" onclick="confirmarRechazo('tgr')">Confirmar rechazo</button>
+                  <button class="btn btn-ghost btn-sm" onclick="cancelarRechazo('tgr')">Cancelar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PAC - Aprobado -->
+          <div class="cont-item ci-ok">
+            <div class="ci-header">
+              <div class="ci-title">🏦 PAC &mdash; Pago Automatico Cuenta</div>
+              <div class="fc gap-8"><span class="badge bg-green">✅ Aprobado</span><span class="badge bg-blue">Periodo 202511</span></div>
+            </div>
+            <div class="ci-stats">
+              <div class="ci-stat"><label>Registros</label><span>18.923</span></div>
+              <div class="ci-stat"><label>Monto aprobado</label><span>$3.891.560.000</span></div>
+              <div class="ci-stat"><label>Referencia</label><span>OC-2025-1142</span></div>
+              <div class="ci-stat"><label>Aprobado por</label><span>Maria Fernandez &middot; Hoy 10:42</span></div>
+            </div>
+            <div class="approved-msg">✅&nbsp; Se cargaron <b>&nbsp;18.923 lineas&nbsp;</b> con <b>&nbsp;$3.891.560.000&nbsp;</b> en Matriz RCD &mdash; validado Contabilidad</div>
+          </div>
+
+          <!-- Previred - Aprobado -->
+          <div class="cont-item ci-ok">
+            <div class="ci-header">
+              <div class="ci-title">📋 Previred</div>
+              <div class="fc gap-8"><span class="badge bg-green">✅ Aprobado</span><span class="badge bg-blue">Periodo 202511</span></div>
+            </div>
+            <div class="ci-stats">
+              <div class="ci-stat"><label>Registros</label><span>8.214</span></div>
+              <div class="ci-stat"><label>Monto aprobado</label><span>$892.100.000</span></div>
+              <div class="ci-stat"><label>Referencia</label><span>OC-2025-1138</span></div>
+              <div class="ci-stat"><label>Aprobado por</label><span>Carlos Reyes &middot; Ayer 16:30</span></div>
+            </div>
+            <div class="approved-msg">✅&nbsp; Se cargaron <b>&nbsp;8.214 lineas&nbsp;</b> con <b>&nbsp;$892.100.000&nbsp;</b> en Matriz RCD &mdash; validado Contabilidad</div>
+          </div>
+
+        </div>
+      </div><!-- /m3 -->
+
+
+      <!-- ═══════════════════════════════════════
+           M4 · DATOS Y VISTAS
+      ═══════════════════════════════════════ -->
+      <div id="m4" class="cscreen">
+        <div class="mod-header mh4">
+          <div class="mh-left">
+            <h2>Modulo 4 &mdash; Datos y Vistas</h2>
+            <p>Archivos intermedios por recaudador, Matriz RCD acumulada y descargas</p>
+          </div>
+          <div class="mh-right">
+            <span class="badge" style="background:rgba(255,255,255,.2);color:#fff">27.137 regs en Matriz</span>
+            <span class="badge" style="background:rgba(255,255,255,.2);color:#fff">$4.784 M aprobados</span>
+          </div>
+        </div>
+
+        <div class="sub-tabs">
+          <div class="stab active" onclick="showTab(this,'t-cons')">📁 Consolidados por recaudador</div>
+          <div class="stab" onclick="showTab(this,'t-matriz')">📊 Matriz RCD Final</div>
+          <div class="stab" onclick="showTab(this,'t-dl')">⬇️ Descargas</div>
+        </div>
+
+        <!-- CONSOLIDADOS -->
+        <div id="t-cons" class="stab-pane active">
+          <div class="cons-item">
+            <div class="cons-icon">💳</div>
+            <div class="cons-info">
+              <div class="cons-name">Consolidado_PAT_11-2025.xlsx</div>
+              <div class="cons-meta">
+                <span><strong>12.847</strong> registros</span>
+                <span><strong>$2.341 M</strong></span>
+                <span>Generado: Ayer 14:25</span>
+                <span>Script: consolidar_pat.py</span>
+                <span><span class="badge bg-orange">⏳ Pend. M3</span></span>
+              </div>
+            </div>
+            <div class="cons-actions">
+              <button class="btn btn-ghost btn-sm" onclick="openPreview('pat')">👁 Preview</button>
+              <button class="btn btn-teal btn-sm">⬇ xlsx</button>
+            </div>
+          </div>
+          <div class="cons-item">
+            <div class="cons-icon">🏦</div>
+            <div class="cons-info">
+              <div class="cons-name">Consolidado_PAC_11-2025.xlsx</div>
+              <div class="cons-meta">
+                <span><strong>18.923</strong> registros</span>
+                <span><strong>$3.892 M</strong></span>
+                <span>Generado: Hoy 09:20</span>
+                <span>Script: consolidar_pac.py</span>
+                <span><span class="badge bg-green">✅ En Matriz</span></span>
+              </div>
+            </div>
+            <div class="cons-actions">
+              <button class="btn btn-ghost btn-sm" onclick="openPreview('pac')">👁 Preview</button>
+              <button class="btn btn-teal btn-sm">⬇ xlsx</button>
+            </div>
+          </div>
+          <div class="cons-item">
+            <div class="cons-icon">🏛️</div>
+            <div class="cons-info">
+              <div class="cons-name">TGR_Consolidado_202511.xlsx</div>
+              <div class="cons-meta">
+                <span><strong>3.102</strong> registros</span>
+                <span><strong>$891 M</strong></span>
+                <span>Generado: 03/03/2026 09:48</span>
+                <span>Script: consolidar_tgr.py</span>
+                <span><span class="badge bg-orange">⏳ Pend. M3</span></span>
+              </div>
+            </div>
+            <div class="cons-actions">
+              <button class="btn btn-ghost btn-sm" onclick="openPreview('tgr')">👁 Preview</button>
+              <button class="btn btn-teal btn-sm">⬇ xlsx</button>
+            </div>
+          </div>
+          <div class="cons-item">
+            <div class="cons-icon">📋</div>
+            <div class="cons-info">
+              <div class="cons-name">Casosprevired_202511.xlsx</div>
+              <div class="cons-meta">
+                <span><strong>8.214</strong> registros</span>
+                <span><strong>$892 M</strong></span>
+                <span>Generado: 04/03/2026 11:05</span>
+                <span>Script: procesador_previred.py</span>
+                <span><span class="badge bg-green">✅ En Matriz</span></span>
+              </div>
+            </div>
+            <div class="cons-actions">
+              <button class="btn btn-ghost btn-sm" onclick="openPreview('prev')">👁 Preview</button>
+              <button class="btn btn-teal btn-sm">⬇ xlsx</button>
+            </div>
+          </div>
+          <div class="cons-item" style="opacity:.5">
+            <div class="cons-icon">🏥</div>
+            <div class="cons-info">
+              <div class="cons-name">Consolidado_Licencias_202511.xlsx</div>
+              <div class="cons-meta"><span><span class="badge bg-grey">Sin generar — archivos no cargados</span></span></div>
+            </div>
+            <div class="cons-actions">
+              <button class="btn btn-ghost btn-sm dis" disabled>👁 Preview</button>
+              <button class="btn btn-teal btn-sm dis" disabled>⬇ xlsx</button>
+            </div>
+          </div>
+        </div><!-- /t-cons -->
+
+        <!-- MATRIZ FINAL -->
+        <div id="t-matriz" class="stab-pane">
+          <div class="stats-row">
+            <div class="stat-card sc-green"><div class="stat-label">Registros en Matriz</div><div class="stat-value">27.137</div><div class="stat-sub">PAC + Previred</div></div>
+            <div class="stat-card sc-blue"><div class="stat-label">Monto total</div><div class="stat-value">$4.784 M</div><div class="stat-sub">CLP bruto</div></div>
+            <div class="stat-card sc-orange"><div class="stat-label">Pendientes ingreso</div><div class="stat-value">15.949</div><div class="stat-sub">PAT + TGR pend. M3</div></div>
+            <div class="stat-card sc-purple"><div class="stat-label">Recaudadores</div><div class="stat-value">2 / 5</div><div class="stat-sub">Aprobados en RCD</div></div>
+          </div>
+          <div class="card">
+            <div class="card-title">
+              Matriz_Recaudacion_Consolidada_202511.xlsx
+              <button class="btn btn-teal btn-sm">⬇ Descargar Matriz completa</button>
+            </div>
+            <div class="tbl-wrap">
+              <table>
+                <tr><th>Recaudador</th><th>Rut Afiliado</th><th>Rut Empleador</th><th>PERCOT</th><th>Monto pagado</th><th>CotizacionObligatoria</th><th>Fecha pago</th><th>Oportunidad</th><th>Estado RCD</th></tr>
+                <tr><td><span class="badge bg-blue">PAC</span></td><td>012345678-9</td><td>076543210-K</td><td>202511</td><td>$187.500</td><td>$187.500</td><td>05/11/2025</td><td>Normal</td><td><span class="badge bg-green">En Matriz</span></td></tr>
+                <tr><td><span class="badge bg-blue">PAC</span></td><td>018173941-K</td><td>096512345-3</td><td>202511</td><td>$234.000</td><td>$234.000</td><td>05/11/2025</td><td>Normal</td><td><span class="badge bg-green">En Matriz</span></td></tr>
+                <tr><td><span class="badge bg-blue">PAC</span></td><td>009876543-2</td><td>085421369-7</td><td>202511</td><td>$312.000</td><td>$312.000</td><td>06/11/2025</td><td>Normal</td><td><span class="badge bg-green">En Matriz</span></td></tr>
+                <tr><td><span class="badge bg-purple">Previred</span></td><td>004567891-1</td><td>076543210-K</td><td>202511</td><td>$198.000</td><td>$178.200</td><td>10/11/2025</td><td>Normal</td><td><span class="badge bg-green">En Matriz</span></td></tr>
+                <tr><td><span class="badge bg-purple">Previred</span></td><td>011625199-K</td><td>098765432-1</td><td>202511</td><td>$421.000</td><td>$378.900</td><td>10/11/2025</td><td>Normal</td><td><span class="badge bg-green">En Matriz</span></td></tr>
+                <tr><td><span class="badge bg-purple">Previred</span></td><td>003084297-9</td><td>096512345-3</td><td>202511</td><td>$521.000</td><td>$468.900</td><td>12/11/2025</td><td>Atrasada</td><td><span class="badge bg-green">En Matriz</span></td></tr>
+                <tr style="color:#A0AEC0;font-style:italic"><td colspan="9" style="text-align:center;padding:10px">... 27.131 registros adicionales ...</td></tr>
+              </table>
+            </div>
+          </div>
+        </div><!-- /t-matriz -->
+
+        <!-- DESCARGAS -->
+        <div id="t-dl" class="stab-pane">
+          <div class="dl-grid">
+            <div class="dl-card">
+              <div class="dl-icon">📊</div>
+              <div class="dl-name">Matriz RCD Completa</div>
+              <div class="dl-meta">Matriz_Recaudacion_Consolidada_202511.xlsx<br>27.137 regs · 58 columnas · PAC + Previred</div>
+              <button class="btn btn-teal" style="width:100%">⬇ Descargar xlsx</button>
+            </div>
+            <div class="dl-card">
+              <div class="dl-icon">💳</div>
+              <div class="dl-name">Consolidado PAT</div>
+              <div class="dl-meta">Consolidado_PAT_11-2025.xlsx<br>12.847 regs · $2.341 M · <span class="badge bg-orange" style="font-size:10px">Pend. M3</span></div>
+              <button class="btn btn-teal" style="width:100%">⬇ Descargar xlsx</button>
+            </div>
+            <div class="dl-card">
+              <div class="dl-icon">🏦</div>
+              <div class="dl-name">Consolidado PAC</div>
+              <div class="dl-meta">Consolidado_PAC_11-2025.xlsx<br>18.923 regs · $3.892 M · <span class="badge bg-green" style="font-size:10px">Aprobado</span></div>
+              <button class="btn btn-teal" style="width:100%">⬇ Descargar xlsx</button>
+            </div>
+            <div class="dl-card">
+              <div class="dl-icon">🏛️</div>
+              <div class="dl-name">Consolidado TGR</div>
+              <div class="dl-meta">TGR_Consolidado_202511.xlsx<br>3.102 regs · $891 M · <span class="badge bg-orange" style="font-size:10px">Pend. M3</span></div>
+              <button class="btn btn-teal" style="width:100%">⬇ Descargar xlsx</button>
+            </div>
+            <div class="dl-card">
+              <div class="dl-icon">📋</div>
+              <div class="dl-name">Consolidado Previred</div>
+              <div class="dl-meta">Casosprevired_202511.xlsx<br>8.214 regs · $892 M · <span class="badge bg-green" style="font-size:10px">Aprobado</span></div>
+              <button class="btn btn-teal" style="width:100%">⬇ Descargar xlsx</button>
+            </div>
+            <div class="dl-card" style="opacity:.5">
+              <div class="dl-icon">🏥</div>
+              <div class="dl-name">Consolidado Subsidios</div>
+              <div class="dl-meta">Sin generar<br>Archivos no cargados en M1</div>
+              <button class="btn btn-teal dis" style="width:100%" disabled>⬇ No disponible</button>
+            </div>
+          </div>
+        </div><!-- /t-dl -->
+
+      </div><!-- /m4 -->
+
+
+      <!-- ═══════════════════════════════════════
+           M5 · PERFILES
+      ═══════════════════════════════════════ -->
+      <div id="m5" class="cscreen">
+        <div class="mod-header mh5">
+          <div class="mh-left">
+            <h2>Modulo 5 &mdash; Perfiles de Usuario</h2>
+            <p>Gestion de usuarios, roles y permisos del sistema</p>
+          </div>
+          <div class="mh-right">
+            <button class="btn btn-sm" id="btn-nuevo-user" style="background:rgba(255,255,255,.2);color:#fff;border:none;cursor:pointer">+ Nuevo usuario</button>
+          </div>
+        </div>
+
+        <!-- Role cards de referencia -->
+        <div class="role-ref-grid">
+          <div class="rref rr-op">
+            <div class="rr-icon">📋</div>
+            <div class="rr-name">Operaciones Recaudacion</div>
+            <div class="rp y text-sm mb-8">M1 · Cargar y gestionar archivos</div>
+            <div class="rp y text-sm mb-8">M2 · Revisar transformacion</div>
+            <div class="rp y text-sm mb-8">M4 · Ver datos y descargar</div>
+            <div class="rp n text-sm mb-8">M3 · Aprobar conciliacion</div>
+            <div class="rp n text-sm">M5 · Administrar usuarios</div>
+          </div>
+          <div class="rref rr-cont">
+            <div class="rr-icon">🧾</div>
+            <div class="rr-name">Contabilidad / Conciliacion</div>
+            <div class="rp y text-sm mb-8">M3 · Aprobar conciliacion</div>
+            <div class="rp y text-sm mb-8">M2 · Ver transformacion</div>
+            <div class="rp y text-sm mb-8">M4 · Ver datos y descargar</div>
+            <div class="rp n text-sm mb-8">M1 · Cargar archivos</div>
+            <div class="rp n text-sm">M5 · Administrar usuarios</div>
+          </div>
+          <div class="rref rr-admin">
+            <div class="rr-icon">⚙️</div>
+            <div class="rr-name">Administrador Total</div>
+            <div class="rp y text-sm mb-8">M1 · Cargar y gestionar archivos</div>
+            <div class="rp y text-sm mb-8">M3 · Aprobar conciliacion</div>
+            <div class="rp y text-sm mb-8">M4 · Ver datos y descargar</div>
+            <div class="rp y text-sm mb-8">M5 · Administrar usuarios</div>
+            <div class="rp y text-sm">Todos los modulos sin restriccion</div>
+          </div>
+        </div>
+
+        <!-- Usuarios activos -->
+        <div class="card mb-16">
+          <div class="card-title">Usuarios del sistema</div>
+          <table class="user-table">
+            <tr><th>Usuario</th><th>Nombre</th><th>Modulo acceso</th><th>Ultimo acceso</th><th>Estado</th><th>Acciones</th></tr>
+            <tr>
+              <td>jvaldes</td><td>Juan Valdes</td>
+              <td><span class="badge bg-blue">Operaciones</span></td>
+              <td>Hoy 14:30</td><td><span class="badge bg-green">Activo</span></td>
+              <td><button class="btn btn-ghost btn-sm">Editar</button></td>
+            </tr>
+            <tr>
+              <td>mfernandez</td><td>Maria Fernandez</td>
+              <td><span class="badge bg-purple">Contabilidad</span></td>
+              <td>Hoy 10:45</td><td><span class="badge bg-green">Activo</span></td>
+              <td><button class="btn btn-ghost btn-sm">Editar</button></td>
+            </tr>
+            <tr>
+              <td>creyes</td><td>Carlos Reyes</td>
+              <td><span class="badge bg-purple">Contabilidad</span></td>
+              <td>Ayer 16:35</td><td><span class="badge bg-green">Activo</span></td>
+              <td><button class="btn btn-ghost btn-sm">Editar</button></td>
+            </tr>
+            <tr>
+              <td>admin</td><td>Admin Colmena</td>
+              <td><span class="badge" style="background:#FEFCBF;color:#744210">Administrador</span></td>
+              <td>Hoy 08:00</td><td><span class="badge bg-green">Activo</span></td>
+              <td><button class="btn btn-ghost btn-sm">Editar</button></td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Tabla de permisos -->
+        <div class="card">
+          <div class="card-title">Matriz de permisos por modulo</div>
+          <table class="perm-table">
+            <tr>
+              <th style="width:40%">Accion</th>
+              <th>Operaciones</th>
+              <th>Contabilidad</th>
+              <th>Administrador</th>
+            </tr>
+            <tr><td><b>M1</b> &middot; Cargar archivos al sistema</td><td class="py">✓ Si</td><td class="pn">✗ No</td><td class="py">✓ Si</td></tr>
+            <tr><td><b>M1</b> &middot; Eliminar archivos cargados</td><td class="pn">✗ No</td><td class="pn">✗ No</td><td class="py">✓ Si</td></tr>
+            <tr><td><b>M2</b> &middot; Ver transformacion y log</td><td class="py">✓ Si</td><td class="py">✓ Si (solo lectura)</td><td class="py">✓ Si</td></tr>
+            <tr><td><b>M3</b> &middot; Ver cargas pendientes</td><td class="py">✓ Si</td><td class="py">✓ Si</td><td class="py">✓ Si</td></tr>
+            <tr><td><b>M3</b> &middot; Subir prueba contable</td><td class="pn">✗ No</td><td class="py">✓ Si</td><td class="py">✓ Si</td></tr>
+            <tr><td><b>M3</b> &middot; Aprobar y liberar a Matriz RCD</td><td class="pn">✗ No</td><td class="py">✓ Si</td><td class="py">✓ Si</td></tr>
+            <tr><td><b>M4</b> &middot; Ver consolidados y Matriz</td><td class="py">✓ Si</td><td class="py">✓ Si</td><td class="py">✓ Si</td></tr>
+            <tr><td><b>M4</b> &middot; Descargar archivos</td><td class="py">✓ Si</td><td class="py">✓ Si</td><td class="py">✓ Si</td></tr>
+            <tr><td><b>M5</b> &middot; Ver perfiles y permisos</td><td class="pn">✗ No</td><td class="pn">✗ No</td><td class="py">✓ Si</td></tr>
+            <tr><td><b>M5</b> &middot; Crear / editar usuarios</td><td class="pn">✗ No</td><td class="pn">✗ No</td><td class="py">✓ Si</td></tr>
+          </table>
+        </div>
+      </div><!-- /m5 -->
+
+
+      <!-- ═══════════════════════════════════════
+           M6 · LOG DEL SISTEMA
+      ═══════════════════════════════════════ -->
+      <div id="m6" class="cscreen">
+        <div class="mod-header mh6">
+          <div class="mh-left">
+            <h2>Modulo 6 &mdash; Log del Sistema</h2>
+            <p>Historial de acciones por modulo: carga, transformacion, conciliacion, vistas y perfiles</p>
+          </div>
+          <div class="mh-right">
+            <span class="badge" style="background:rgba(255,255,255,.2);color:#fff">38 eventos hoy</span>
+            <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border:none;cursor:pointer" onclick="alert('Exportar log (mockup)')">⬇ Exportar log</button>
+          </div>
+        </div>
+
+        <!-- Resumen rapido -->
+        <div class="stats-row mb-16">
+          <div class="stat-card sc-blue"><div class="stat-label">M1 Carga</div><div class="stat-value">12</div><div class="stat-sub">eventos registrados</div></div>
+          <div class="stat-card sc-purple"><div class="stat-label">M2 Transformacion</div><div class="stat-value">8</div><div class="stat-sub">procesos ejecutados</div></div>
+          <div class="stat-card sc-green"><div class="stat-label">M3 Conciliacion</div><div class="stat-value">7</div><div class="stat-sub">aprobaciones/rechazos</div></div>
+          <div class="stat-card sc-teal"><div class="stat-label">M4 Datos</div><div class="stat-value">11</div><div class="stat-sub">consultas y descargas</div></div>
+        </div>
+
+        <!-- Tabs por modulo -->
+        <div class="log-tabs">
+          <div class="ltab active" onclick="showLTab(this,'lt-all')">📋 Todos</div>
+          <div class="ltab" onclick="showLTab(this,'lt-m1')"><span class="mod-tag mt-m1">M1</span>&nbsp;Carga</div>
+          <div class="ltab" onclick="showLTab(this,'lt-m2')"><span class="mod-tag mt-m2">M2</span>&nbsp;Transform.</div>
+          <div class="ltab" onclick="showLTab(this,'lt-m3')"><span class="mod-tag mt-m3">M3</span>&nbsp;Conciliacion</div>
+          <div class="ltab" onclick="showLTab(this,'lt-m4')"><span class="mod-tag mt-m4">M4</span>&nbsp;Datos</div>
+          <div class="ltab" onclick="showLTab(this,'lt-m5')"><span class="mod-tag mt-m5">M5</span>&nbsp;Perfiles</div>
+        </div>
+
+        <!-- ALL -->
+        <div id="lt-all" class="ltab-pane active">
+          <div class="card" style="padding:0;overflow:hidden">
+            <div class="tbl-wrap" style="max-height:480px;border:none;border-radius:0;margin-bottom:0">
+              <table class="log-table">
+                <tr><th style="width:150px">Timestamp</th><th style="width:70px">Modulo</th><th>Usuario</th><th>Accion</th><th>Detalle</th><th style="width:90px">Resultado</th></tr>
+                <tr><td>2026-03-06 14:30:22</td><td><span class="mod-tag mt-m1">M1</span></td><td>jvaldes</td><td>Carga de archivos</td><td>R3_PAT_202511.TXT — 0.6 MB — PAT</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-06 14:25:10</td><td><span class="mod-tag mt-m1">M1</span></td><td>jvaldes</td><td>Carga de archivos</td><td>R2_PAT_202511.TXT — 1.1 MB — PAT</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-06 12:18:44</td><td><span class="mod-tag mt-m3">M3</span></td><td>mfernandez</td><td>Aprobacion conciliacion</td><td>PAC 202511 — $3.891.560.000 — Ref: OC-2025-1142</td><td class="log-res-ok">APROBADO</td></tr>
+                <tr><td>2026-03-06 11:05:33</td><td><span class="mod-tag mt-m2">M2</span></td><td>sistema</td><td>Transformacion ejecutada</td><td>Previred 202511 — 8.214 regs procesados</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-06 10:42:15</td><td><span class="mod-tag mt-m3">M3</span></td><td>mfernandez</td><td>Aprobacion conciliacion</td><td>Previred 202511 — $892.100.000 — Ref: OC-2025-1138</td><td class="log-res-ok">APROBADO</td></tr>
+                <tr><td>2026-03-06 10:30:02</td><td><span class="mod-tag mt-m4">M4</span></td><td>jvaldes</td><td>Descarga archivo</td><td>Casosprevired_202511.xlsx — 8.214 regs</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-06 09:20:58</td><td><span class="mod-tag mt-m1">M1</span></td><td>jvaldes</td><td>Carga de archivos</td><td>BCI_PAC_202511.TXT + 8 bancos — PAC</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-06 09:15:40</td><td><span class="mod-tag mt-m2">M2</span></td><td>sistema</td><td>Transformacion ejecutada</td><td>PAC 202511 — 18.923 regs validos / 659 rechazados</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-06 08:00:11</td><td><span class="mod-tag mt-m5">M5</span></td><td>admin</td><td>Login sistema</td><td>Perfil: Administrador</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-05 16:35:22</td><td><span class="mod-tag mt-m3">M3</span></td><td>creyes</td><td>Rechazo conciliacion</td><td>TGR 202511 — Monto no coincide con extracto</td><td class="log-res-warn">RECHAZADO</td></tr>
+                <tr><td>2026-03-05 16:30:09</td><td><span class="mod-tag mt-m4">M4</span></td><td>creyes</td><td>Preview consolidado</td><td>TGR_Consolidado_202511.xlsx</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-05 14:25:50</td><td><span class="mod-tag mt-m2">M2</span></td><td>sistema</td><td>Transformacion ejecutada</td><td>PAT 202511 — 12.102 validos / 742 rechazados / 3 sin monto</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-05 14:20:33</td><td><span class="mod-tag mt-m1">M1</span></td><td>jvaldes</td><td>Carga de archivos</td><td>CARGO_PAT_202511.TXT + R1 + R2 + R3 — PAT</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-04 11:05:18</td><td><span class="mod-tag mt-m1">M1</span></td><td>jvaldes</td><td>Carga de archivos</td><td>PL202511.txt — Previred</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-03 09:48:05</td><td><span class="mod-tag mt-m1">M1</span></td><td>jvaldes</td><td>Carga de archivos</td><td>Noviembre 2025.dat — TGR</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-01 10:15:00</td><td><span class="mod-tag mt-m5">M5</span></td><td>admin</td><td>Nuevo usuario creado</td><td>jvaldes — Perfil: Operaciones</td><td class="log-res-ok">OK</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- M1 -->
+        <div id="lt-m1" class="ltab-pane">
+          <div class="card" style="padding:0;overflow:hidden">
+            <div class="tbl-wrap" style="max-height:480px;border:none;border-radius:0;margin-bottom:0">
+              <table class="log-table">
+                <tr><th style="width:150px">Timestamp</th><th>Usuario</th><th>Accion</th><th>Detalle</th><th style="width:90px">Resultado</th></tr>
+                <tr><td>2026-03-06 14:30:22</td><td>jvaldes</td><td>Carga de archivos</td><td>R3_PAT_202511.TXT — 0.6 MB — PAT · Reintento 3</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-06 14:25:10</td><td>jvaldes</td><td>Carga de archivos</td><td>R2_PAT_202511.TXT — 1.1 MB — PAT · Reintento 2</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-06 09:20:58</td><td>jvaldes</td><td>Carga de archivos</td><td>BCI + BICE + BdChile + 6 bancos mas — PAC — 9 archivos</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-05 14:20:33</td><td>jvaldes</td><td>Carga de archivos</td><td>CARGO_PAT_202511.TXT — 2.1 MB + R1 1.8 MB — PAT</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-04 11:05:18</td><td>jvaldes</td><td>Carga de archivos</td><td>PL202511.txt — 3.2 MB — Previred · carpeta 202511/</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-03 09:48:05</td><td>jvaldes</td><td>Carga de archivos</td><td>Noviembre 2025.dat — 0.9 MB — TGR</td><td class="log-res-ok">OK</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- M2 -->
+        <div id="lt-m2" class="ltab-pane">
+          <div class="card" style="padding:0;overflow:hidden">
+            <div class="tbl-wrap" style="max-height:480px;border:none;border-radius:0;margin-bottom:0">
+              <table class="log-table">
+                <tr><th style="width:150px">Timestamp</th><th>Usuario</th><th>Recaudador</th><th>Detalle</th><th style="width:90px">Resultado</th></tr>
+                <tr><td>2026-03-06 11:05:33</td><td>sistema</td><td>Previred</td><td>8.214 regs validos · 0 rechazados · 5 tipos registro procesados</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-06 09:15:40</td><td>sistema</td><td>PAC</td><td>18.923 validos · 659 rechazados · 9 bancos · multi-formato TXT/DAT/XLS</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-05 14:25:50</td><td>sistema</td><td>PAT</td><td>12.102 validos · 742 cod!=0 · 3 monto $0 · RUT zfill(9) aplicado</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-04 11:08:22</td><td>sistema</td><td>Previred</td><td>Primer intento — error encoding utf-8 · reintento latin-1 exitoso</td><td class="log-res-warn">WARN</td></tr>
+                <tr><td>2026-03-03 09:50:11</td><td>sistema</td><td>TGR</td><td>3.102 regs · largo fijo 330 chars · monto chars 235-249</td><td class="log-res-ok">OK</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- M3 -->
+        <div id="lt-m3" class="ltab-pane">
+          <div class="card" style="padding:0;overflow:hidden">
+            <div class="tbl-wrap" style="max-height:480px;border:none;border-radius:0;margin-bottom:0">
+              <table class="log-table">
+                <tr><th style="width:150px">Timestamp</th><th>Usuario</th><th>Recaudador</th><th>Accion</th><th>Detalle</th><th style="width:90px">Resultado</th></tr>
+                <tr><td>2026-03-06 12:18:44</td><td>mfernandez</td><td>PAC</td><td>Aprobacion</td><td>$3.891.560.000 · 18.923 regs · Ref: OC-2025-1142</td><td class="log-res-ok">APROBADO</td></tr>
+                <tr><td>2026-03-06 10:42:15</td><td>mfernandez</td><td>Previred</td><td>Aprobacion</td><td>$892.100.000 · 8.214 regs · Ref: OC-2025-1138</td><td class="log-res-ok">APROBADO</td></tr>
+                <tr><td>2026-03-05 16:35:22</td><td>creyes</td><td>TGR</td><td>Rechazo</td><td>Motivo: monto cuenta corriente no coincide con extracto bancario</td><td class="log-res-warn">RECHAZADO</td></tr>
+                <tr><td>2026-03-05 11:20:08</td><td>creyes</td><td>PAC</td><td>Inicio revision</td><td>Abrio formulario conciliacion PAC 202511</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-05 09:45:33</td><td>mfernandez</td><td>Previred</td><td>Inicio revision</td><td>Abrio formulario conciliacion Previred 202511</td><td class="log-res-ok">OK</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- M4 -->
+        <div id="lt-m4" class="ltab-pane">
+          <div class="card" style="padding:0;overflow:hidden">
+            <div class="tbl-wrap" style="max-height:480px;border:none;border-radius:0;margin-bottom:0">
+              <table class="log-table">
+                <tr><th style="width:150px">Timestamp</th><th>Usuario</th><th>Accion</th><th>Detalle</th><th style="width:90px">Resultado</th></tr>
+                <tr><td>2026-03-06 14:35:00</td><td>jvaldes</td><td>Preview consolidado</td><td>Consolidado_PAT_11-2025.xlsx — abierto modal</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-06 10:30:02</td><td>jvaldes</td><td>Descarga</td><td>Casosprevired_202511.xlsx — 8.214 regs · $892 M</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-06 10:28:45</td><td>jvaldes</td><td>Preview consolidado</td><td>Casosprevired_202511.xlsx — abierto modal</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-06 09:55:18</td><td>creyes</td><td>Consulta Matriz</td><td>Matriz_Recaudacion_Consolidada_202511.xlsx — tab Matriz Final</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-06 09:22:30</td><td>mfernandez</td><td>Descarga</td><td>Consolidado_PAC_11-2025.xlsx — 18.923 regs</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-05 16:30:09</td><td>creyes</td><td>Preview consolidado</td><td>TGR_Consolidado_202511.xlsx — abierto modal</td><td class="log-res-ok">OK</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- M5 -->
+        <div id="lt-m5" class="ltab-pane">
+          <div class="card" style="padding:0;overflow:hidden">
+            <div class="tbl-wrap" style="max-height:480px;border:none;border-radius:0;margin-bottom:0">
+              <table class="log-table">
+                <tr><th style="width:150px">Timestamp</th><th>Usuario</th><th>Accion</th><th>Detalle</th><th style="width:90px">Resultado</th></tr>
+                <tr><td>2026-03-06 08:00:11</td><td>admin</td><td>Login</td><td>Perfil: Administrador</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-05 08:10:44</td><td>admin</td><td>Login</td><td>Perfil: Administrador</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-01 10:20:15</td><td>admin</td><td>Edicion usuario</td><td>creyes — cambio perfil a Contabilidad</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-03-01 10:15:00</td><td>admin</td><td>Nuevo usuario</td><td>jvaldes — Perfil: Operaciones · modulos M1/M2/M4</td><td class="log-res-ok">OK</td></tr>
+                <tr><td>2026-02-28 09:00:00</td><td>admin</td><td>Nuevo usuario</td><td>mfernandez — Perfil: Contabilidad · modulos M2/M3/M4</td><td class="log-res-ok">OK</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /m6 -->
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /s-app -->
+
+<!-- ═══════════════════════ MODAL PREVIEW ═══════════════════════ -->
+<div class="modal-overlay" id="modal-preview" onclick="closePreviewOutside(event)">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Vista previa</div>
+      <button class="modal-close" onclick="closePreview()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Stats rapidas -->
+      <div class="stats-row" id="modal-stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:16px"></div>
+      <!-- Tabla de preview -->
+      <div class="tbl-wrap" style="max-height:380px">
+        <table id="modal-table"></table>
+      </div>
+      <div class="text-xs text-muted mt-8" id="modal-footer" style="text-align:right"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var S = { role: null };
+
+var ROLES = {
+  op:    { chip: 'Operaciones', pill: 'rp-op' },
+  cont:  { chip: 'Contabilidad', pill: 'rp-cont' },
+  admin: { chip: 'Administrador', pill: 'rp-admin' }
+};
+
+/* LOGIN */
+function selRole(r) {
+  S.role = r;
+  document.querySelectorAll('.rc').forEach(function(c) { c.classList.remove('sel'); });
+  document.getElementById('rc-' + r).classList.add('sel');
+  document.getElementById('btn-enter').classList.add('vis');
+}
+
+function enterApp() {
+  if (!S.role) return;
+  document.getElementById('s-login').classList.remove('active');
+  document.getElementById('s-app').classList.add('active');
+  applyRole();
+  goTo('m1');
+}
+
+function logout() {
+  document.getElementById('s-app').classList.remove('active');
+  document.getElementById('s-login').classList.add('active');
+  document.querySelectorAll('.rc').forEach(function(c) { c.classList.remove('sel'); });
+  document.getElementById('btn-enter').classList.remove('vis');
+  S.role = null;
+}
+
+/* ROLE PERMISSIONS */
+function applyRole() {
+  var r = ROLES[S.role];
+  var pill = document.getElementById('role-pill');
+  pill.textContent = r.chip;
+  pill.className = 'role-pill ' + r.pill;
+  document.getElementById('chip-lbl').textContent = r.chip;
+
+  var niM1 = document.getElementById('ni-m1');
+  var niM3 = document.getElementById('ni-m3');
+  var niM5 = document.getElementById('ni-m5');
+
+  /* Reset locks */
+  [niM1, niM3, niM5].forEach(function(el) {
+    el.classList.remove('dis');
+    el.removeAttribute('data-tip');
+    var lk = el.querySelector('.nav-lock');
+    if (lk) lk.remove();
+  });
+
+  if (S.role === 'op') {
+    lockNav(niM3, 'Solo Contabilidad o Administrador');
+    lockNav(niM5, 'Solo Administrador');
+    setAprobarBtns(true);
+    var bc = document.getElementById('btn-cargar-m1');
+    if (bc) { bc.classList.remove('dis'); bc.disabled = false; }
+    var bu = document.getElementById('btn-nuevo-user');
+    if (bu) { bu.classList.add('dis'); bu.disabled = true; }
+
+  } else if (S.role === 'cont') {
+    lockNav(niM1, 'Solo Operaciones o Administrador');
+    lockNav(niM5, 'Solo Administrador');
+    setAprobarBtns(false);
+    var bc2 = document.getElementById('btn-cargar-m1');
+    if (bc2) { bc2.classList.add('dis'); bc2.disabled = true; bc2.setAttribute('data-tip','Solo Operaciones o Administrador'); }
+    var bu2 = document.getElementById('btn-nuevo-user');
+    if (bu2) { bu2.classList.add('dis'); bu2.disabled = true; }
+
+  } else { /* admin */
+    setAprobarBtns(false);
+    var bc3 = document.getElementById('btn-cargar-m1');
+    if (bc3) { bc3.classList.remove('dis'); bc3.disabled = false; }
+    var bu3 = document.getElementById('btn-nuevo-user');
+    if (bu3) { bu3.classList.remove('dis'); bu3.disabled = false; }
+  }
+}
+
+function lockNav(el, tip) {
+  el.classList.add('dis');
+  el.setAttribute('data-tip', tip);
+  var lk = document.createElement('span');
+  lk.className = 'nav-lock';
+  lk.textContent = '🔒';
+  el.appendChild(lk);
+}
+
+function setAprobarBtns(disabled) {
+  ['btn-ap-pat', 'btn-ap-tgr', 'btn-rech-pat', 'btn-rech-tgr'].forEach(function(id) {
+    var b = document.getElementById(id);
+    if (!b) return;
+    if (disabled) {
+      b.classList.add('dis'); b.disabled = true;
+      b.setAttribute('data-tip', 'Solo Contabilidad o Administrador');
+    } else {
+      b.classList.remove('dis'); b.disabled = false;
+      b.removeAttribute('data-tip');
+    }
+  });
+}
+
+/* NAVIGATION */
+var MOD_TITLES = {
+  m1: ['Carga de Archivos', 'M1'],
+  m2: ['Limpieza y Transformacion', 'M2'],
+  m3: ['Conciliacion', 'M3'],
+  m4: ['Datos y Vistas', 'M4'],
+  m5: ['Perfiles', 'M5'],
+  m6: ['Log del Sistema', 'M6']
+};
+
+function goTo(mod) {
+  document.querySelectorAll('.cscreen').forEach(function(s) { s.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  var cs = document.getElementById(mod);
+  if (cs) cs.classList.add('active');
+  var ni = document.getElementById('ni-' + mod);
+  if (ni) ni.classList.add('active');
+  var t = MOD_TITLES[mod] || ['', ''];
+  document.getElementById('nb-title').textContent = t[0];
+  document.getElementById('nb-mod').textContent = t[1];
+}
+
+function navM3() {
+  if (S.role === 'op') return;
+  goTo('m3');
+}
+function navM5() {
+  if (S.role !== 'admin') return;
+  goTo('m5');
+}
+
+/* M1 - Select recaudador */
+var REC_INFO = {
+  pat:  { name: 'PAT — Pago Automatico Tarjeta', path: 'PAC-PAT 2025/PAT/11-2025/', badge: 'bg-orange', badgeTxt: '⏳ Pendiente conciliacion', files: [{n:'CARGO_PAT_202511.TXT',s:'2.1 MB'},{n:'R1_PAT_202511.TXT',s:'1.8 MB'},{n:'R2_PAT_202511.TXT',s:'1.1 MB'},{n:'R3_PAT_202511.TXT',s:'0.6 MB'}], type:'.TXT latin-1 ; delimitador', fields:'[1] contrato [8] rut [11] monto [12] cod', order:'CARGO → R1 → R2 → R3', script:'consolidar_pat.py' },
+  pac:  { name: 'PAC — Pago Automatico Cuenta', path: 'PAC-PAT 2025/PAC/', badge: 'bg-green', badgeTxt: '✅ En Matriz RCD', files: [{n:'BCI_PAC_202511.TXT',s:'4.2 MB'},{n:'BICE_PAC_202511.DAT',s:'1.1 MB'},{n:'Chile_PAC_202511.XLS',s:'2.8 MB'}], type:'.TXT .DAT .XLS .XLSX (multi-banco)', fields:'Variable por banco', order:'CI → R1 → R2 → R3', script:'consolidar_pac.py' },
+  tgr:  { name: 'TGR — Tesoreria General', path: 'TGR/', badge: 'bg-orange', badgeTxt: '⏳ Pendiente conciliacion', files: [{n:'Noviembre 2025.dat',s:'0.9 MB'}], type:'.dat largo fijo 330 chars', fields:'chars 1-11 rut | 235-249 monto', order:'Unico archivo por periodo', script:'consolidar_tgr.py' },
+  prev: { name: 'Previred', path: 'Previred/202511/', badge: 'bg-green', badgeTxt: '✅ En Matriz RCD', files: [{n:'PL202511.txt',s:'3.2 MB'}], type:'largo fijo 290 chars · 5 tipos registro', fields:'tipo-3: RUT trabajador, montos', order:'Subcarpeta YYYYMM', script:'procesador_previred.py' },
+  subs: { name: 'Subsidios — Licencias', path: 'Subsidios/', badge: 'bg-grey', badgeTxt: '— Sin archivos', files: [], type:'.xlsx · hoja tablas licencia recaudaciones_2', fields:'cot_percie, cot_cotrut, cot_mtopag', order:'Archivos NO modificar', script:'generador_matriz_subsidios.py' }
+};
+
+function selectRec(rec) {
+  document.querySelectorAll('.rec-m1').forEach(function(c) { c.classList.remove('selected'); });
+  var idx = {pat:0,pac:1,tgr:2,prev:3,subs:4};
+  document.querySelectorAll('.rec-m1')[idx[rec]].classList.add('selected');
+  var d = REC_INFO[rec];
+  var fileHtml = d.files.length > 0
+    ? d.files.map(function(f){ return '<div class="fi"><span>📄</span><span class="fi-name">'+f.n+'</span><span class="fi-size">'+f.s+'</span><span class="fi-ok">OK</span></div>'; }).join('')
+    : '<div style="text-align:center;padding:16px;color:#A0AEC0;font-size:13px">📁 Sin archivos — arrastra aqui para cargar</div>';
+  document.getElementById('upload-panel').innerHTML =
+    '<div class="card-title"><span>📤 '+d.name+' &middot; '+d.path+'</span><span class="badge '+d.badge+'">'+d.badgeTxt+'</span></div>'+
+    '<div class="grid-2 mb-12">'+
+    '<div><div class="fw-bold text-sm mb-8" style="color:#1F3864">Archivos cargados</div><div class="upload-zone"><div class="uz-icon">📂</div><div class="uz-text"><strong>Haz clic</strong> o arrastra archivos</div></div><div class="file-list">'+fileHtml+'</div></div>'+
+    '<div><div class="fw-bold text-sm mb-8" style="color:#1F3864">Especificaciones del formato</div>'+
+    '<div style="background:#F7FAFC;border-radius:8px;padding:12px;font-size:12px">'+
+    '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #EEF2F7"><span class="text-muted">Tipo</span><span class="fw-bold">'+d.type+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #EEF2F7"><span class="text-muted">Campos clave</span><span class="fw-bold">'+d.fields+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #EEF2F7"><span class="text-muted">Estructura</span><span class="fw-bold">'+d.order+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:4px 0"><span class="text-muted">Script</span><span class="fw-bold">'+d.script+'</span></div>'+
+    '</div>'+
+    '<div class="mt-8"><button class="btn btn-primary btn-sm" id="btn-cargar-m1">+ Agregar archivo</button></div>'+
+    '</div></div>'+
+    '<div class="msg msg-info"><div class="msg-icon">ℹ️</div><div class="msg-body"><strong>Proximos pasos</strong>Con los archivos cargados, ve a <b>M2</b> para revisar la transformacion, luego a <b>M3</b> para conciliacion.</div></div>';
+  applyRole();
+}
+
+/* M2 - Tabs */
+function showRTab(el, paneId) {
+  if (el.style.opacity === '0.5') return;
+  document.querySelectorAll('.rtab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.rtab-pane').forEach(function(p) { p.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById(paneId).classList.add('active');
+}
+
+/* M4 - Sub tabs */
+function showTab(el, paneId) {
+  document.querySelectorAll('.stab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.stab-pane').forEach(function(p) { p.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById(paneId).classList.add('active');
+}
+
+/* M3 - Aprobar */
+var CONT_DATA = {
+  pat: { regs: '12.847', monto: '$2.341.280.000', rec: 'PAT' },
+  tgr: { regs: '3.102',  monto: '$891.340.000',   rec: 'TGR' }
+};
+
+function aprobar(rec) {
+  if (S.role === 'op') return;
+  var d = CONT_DATA[rec];
+  var item = document.getElementById('ci-' + rec);
+  var form = document.getElementById('form-' + rec);
+  var badge = document.getElementById('badge-' + rec);
+
+  form.innerHTML = '<div class="approved-msg">&#10003;&nbsp; Se cargaron <b>&nbsp;' + d.regs + ' lineas&nbsp;</b> con <b>&nbsp;' + d.monto + '&nbsp;</b> en Matriz RCD &mdash; Contabilidad validada</div>';
+  item.className = 'cont-item ci-ok';
+  badge.className = 'badge bg-green';
+  badge.textContent = '✅ Aprobado';
+}
+
+/* M6 - Log tabs */
+function showLTab(el, paneId) {
+  document.querySelectorAll('.ltab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.ltab-pane').forEach(function(p) { p.classList.remove('active'); });
+  el.classList.add('active');
+  document.getElementById(paneId).classList.add('active');
+}
+
+/* M4 - PREVIEW MODAL */
+var PREVIEW_DATA = {
+  pat: {
+    title: 'Preview — Consolidado_PAT_11-2025.xlsx',
+    stats: [
+      { label: 'Total registros', value: '12.847', sub: '4 archivos TXT' },
+      { label: 'Monto total', value: '$2.341 M', sub: 'CLP bruto' },
+      { label: 'Tasa aprobacion', value: '94.2%', sub: '742 rechazados' }
+    ],
+    headers: ['Recaudador','Rut Afiliado','PERCOT','Monto pagado','Cod PAT','Motivo rechazo','Fecha pago','Intento'],
+    rows: [
+      ['PAT','012345678-9','202511','$187.500','0','','05/11/2025','CARGO'],
+      ['PAT','001612099-5','202511','$234.000','0','','12/11/2025','CARGO'],
+      ['PAT','003084297-9','202511','$0','76','Fondos insuficientes','18/11/2025','R1'],
+      ['PAT','011625199-K','202512','$412.500','0','','01/12/2025','R2'],
+      ['PAT','009876543-2','202512','$521.000','0','','05/12/2025','CARGO'],
+      ['PAT','004567891-1','202511','$0','107','Tarjeta vencida','08/11/2025','R1'],
+      ['PAT','007812345-6','202511','$298.000','0','','10/11/2025','CARGO'],
+      ['PAT','015432198-3','202511','$189.500','0','','10/11/2025','R3']
+    ],
+    footer: 'Mostrando 8 de 12.847 registros'
+  },
+  pac: {
+    title: 'Preview — Consolidado_PAC_11-2025.xlsx',
+    stats: [
+      { label: 'Total registros', value: '18.923', sub: '9 bancos' },
+      { label: 'Monto total', value: '$3.892 M', sub: 'CLP bruto' },
+      { label: 'Bancos', value: '9', sub: 'multi-formato' }
+    ],
+    headers: ['Recaudador','Rut Afiliado','PERCOT','Monto pagado','Banco','Cod PAC','Fecha pago','Reintento'],
+    rows: [
+      ['PAC-PAT','012345678-9','202511','$187.500','BCI','0','05/11/2025','CI'],
+      ['PAC-PAT','018173941-K','202511','$234.000','BCI','0','05/11/2025','CI'],
+      ['PAC-PAT','009876543-2','202511','$312.000','BICE','0','06/11/2025','CI'],
+      ['PAC-PAT','004321987-5','202511','$0','BdChile','51','06/11/2025','R1'],
+      ['PAC-PAT','016789234-1','202511','$445.000','Santander','0','07/11/2025','CI'],
+      ['PAC-PAT','003456789-2','202511','$267.000','BancoEstado','0','08/11/2025','CI'],
+      ['PAC-PAT','021345678-4','202511','$389.000','Scotiabank','0','08/11/2025','R2'],
+      ['PAC-PAT','008765432-7','202511','$512.000','Itau','0','10/11/2025','CI']
+    ],
+    footer: 'Mostrando 8 de 18.923 registros'
+  },
+  tgr: {
+    title: 'Preview — TGR_Consolidado_202511.xlsx',
+    stats: [
+      { label: 'Total registros', value: '3.102', sub: '1 archivo .dat' },
+      { label: 'Monto total', value: '$891 M', sub: 'CLP bruto' },
+      { label: 'Tasa exito', value: '100%', sub: 'todos procesados' }
+    ],
+    headers: ['Recaudador','Rut Afiliado','Nombre completo','PERCOT','Monto pagado','Cotiz. Obligatoria','Fecha pago'],
+    rows: [
+      ['TGR','012345678-9','VALDES SOTO JUAN','202511','$187.500','$187.500','15/11/2025'],
+      ['TGR','018173941-K','FERNANDEZ REYES MARIA','202511','$234.000','$234.000','15/11/2025'],
+      ['TGR','009876543-2','GONZALEZ MORA PEDRO','202511','$312.000','$312.000','15/11/2025'],
+      ['TGR','011625199-K','RODRIGUEZ CASTRO ANA','202511','$198.000','$198.000','16/11/2025'],
+      ['TGR','003084297-9','MORALES DIAZ LUIS','202511','$265.000','$265.000','16/11/2025'],
+      ['TGR','007812345-6','SANCHEZ HERRERA ROSA','202511','$310.000','$310.000','20/11/2025'],
+      ['TGR','015432198-3','TORRES VEGA JORGE','202511','$421.000','$421.000','20/11/2025'],
+      ['TGR','004567891-1','PEREZ NUNEZ CARMEN','202511','$289.500','$289.500','22/11/2025']
+    ],
+    footer: 'Mostrando 8 de 3.102 registros'
+  },
+  prev: {
+    title: 'Preview — Casosprevired_202511.xlsx',
+    stats: [
+      { label: 'Total registros', value: '8.214', sub: '1 archivo 290-chars' },
+      { label: 'Monto total', value: '$892 M', sub: 'CLP bruto' },
+      { label: 'Empleadores', value: '1.243', sub: 'planillas declaradas' }
+    ],
+    headers: ['Recaudador','Rut Afiliado','Rut Empleador','PERCOT','Monto pagado','Remun. Imponible','Cotiz. Adicional','Fecha pago'],
+    rows: [
+      ['PREVIRED','004567891-1','076543210-K','202511','$198.000','$1.320.000','$19.800','10/11/2025'],
+      ['PREVIRED','011625199-K','098765432-1','202511','$421.000','$2.806.666','$42.100','10/11/2025'],
+      ['PREVIRED','003084297-9','096512345-3','202511','$521.000','$3.473.333','$52.100','12/11/2025'],
+      ['PREVIRED','018173941-K','096512345-3','202511','$234.000','$1.560.000','$23.400','12/11/2025'],
+      ['PREVIRED','009876543-2','085421369-7','202511','$312.000','$2.080.000','$31.200','10/11/2025'],
+      ['PREVIRED','016789234-1','076543210-K','202511','$189.500','$1.263.333','$18.950','10/11/2025'],
+      ['PREVIRED','007812345-6','098765432-1','202511','$445.000','$2.966.666','$44.500','12/11/2025'],
+      ['PREVIRED','021345678-4','085421369-7','202511','$267.000','$1.780.000','$26.700','12/11/2025']
+    ],
+    footer: 'Mostrando 8 de 8.214 registros'
+  }
+};
+
+function openPreview(rec) {
+  var d = PREVIEW_DATA[rec];
+  if (!d) return;
+  document.getElementById('modal-title').textContent = d.title;
+  /* Stats */
+  var statsHtml = d.stats.map(function(s) {
+    return '<div class="stat-card sc-teal"><div class="stat-label">'+s.label+'</div><div class="stat-value">'+s.value+'</div><div class="stat-sub">'+s.sub+'</div></div>';
+  }).join('');
+  document.getElementById('modal-stats').innerHTML = statsHtml;
+  /* Table */
+  var theadHtml = '<tr>'+d.headers.map(function(h){ return '<th>'+h+'</th>'; }).join('')+'</tr>';
+  var tbodyHtml = d.rows.map(function(row) {
+    return '<tr>'+row.map(function(cell, i) {
+      var style = '';
+      /* Highlight monto $0 or rejection codes */
+      if (i === 3 && cell === '$0') style = ' style="color:#9B2C2C;font-weight:600"';
+      if (i === 4 && cell !== '0' && cell !== '') style = ' style="color:#9B2C2C;font-weight:600"';
+      if (i === 2 && cell.length === 9) style = ' style="color:#276749;font-weight:600"'; /* RUT col */
+      return '<td'+style+'>'+cell+'</td>';
+    }).join('')+'</tr>';
+  }).join('');
+  document.getElementById('modal-table').innerHTML = theadHtml + tbodyHtml;
+  document.getElementById('modal-footer').textContent = d.footer + '  |  Datos ilustrativos — mockup';
+  document.getElementById('modal-preview').classList.add('active');
+}
+
+function closePreview() {
+  document.getElementById('modal-preview').classList.remove('active');
+}
+
+function closePreviewOutside(e) {
+  if (e.target === document.getElementById('modal-preview')) closePreview();
+}
+
+/* M1 - FILE STAGING */
+function stagearArchivos(input) {
+  var files = input.files;
+  if (!files || files.length === 0) return;
+  var stagingArea = document.getElementById('staging-area');
+  var stagingList = document.getElementById('files-staging');
+  var stagingCount = document.getElementById('staging-count');
+  var html = '';
+  var totalMB = 0;
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    var mb = (f.size / (1024*1024)).toFixed(1);
+    totalMB += parseFloat(mb);
+    html += '<div class="fi fi-pend"><span>📄</span><span class="fi-name">'+f.name+'</span><span class="fi-size">'+mb+' MB</span><span class="fi-ok">Pendiente</span></div>';
+  }
+  stagingList.innerHTML = html;
+  stagingCount.textContent = files.length + ' archivo(s) · ' + totalMB.toFixed(1) + ' MB total';
+  stagingArea.style.display = 'block';
+}
+
+function cargarArchivos() {
+  var stagingList = document.getElementById('files-staging');
+  var loadedList = document.getElementById('files-loaded');
+  var stagingArea = document.getElementById('staging-area');
+  var fileInput = document.getElementById('file-input-m1');
+  /* Move staged items to loaded, marking them as OK */
+  var items = stagingList.querySelectorAll('.fi');
+  items.forEach(function(item) {
+    var clone = item.cloneNode(true);
+    clone.classList.remove('fi-pend');
+    var tag = clone.querySelector('.fi-ok');
+    if (tag) { tag.className = 'fi-ok'; tag.textContent = 'OK'; }
+    loadedList.appendChild(clone);
+  });
+  /* Reset staging */
+  stagingList.innerHTML = '';
+  stagingArea.style.display = 'none';
+  if (fileInput) fileInput.value = '';
+  /* Visual feedback */
+  var btn = document.getElementById('btn-cargar-m1');
+  if (btn) {
+    var orig = btn.textContent;
+    btn.textContent = '✅ Archivos cargados';
+    btn.classList.add('btn-success');
+    btn.classList.remove('btn-primary');
+    setTimeout(function() {
+      btn.textContent = orig;
+      btn.classList.remove('btn-success');
+      btn.classList.add('btn-primary');
+    }, 2000);
+  }
+}
+
+function cancelarStaging() {
+  var stagingArea = document.getElementById('staging-area');
+  var stagingList = document.getElementById('files-staging');
+  var fileInput = document.getElementById('file-input-m1');
+  stagingList.innerHTML = '';
+  stagingArea.style.display = 'none';
+  if (fileInput) fileInput.value = '';
+}
+
+/* M3 - RECHAZAR */
+function mostrarRechazo(rec) {
+  var rform = document.getElementById('rform-' + rec);
+  if (rform) {
+    rform.style.display = rform.style.display === 'none' ? 'block' : 'none';
+    if (rform.style.display === 'block') {
+      var ta = document.getElementById('motivo-' + rec);
+      if (ta) ta.focus();
+    }
+  }
+}
+
+function cancelarRechazo(rec) {
+  var rform = document.getElementById('rform-' + rec);
+  if (rform) rform.style.display = 'none';
+  var ta = document.getElementById('motivo-' + rec);
+  if (ta) ta.value = '';
+}
+
+function confirmarRechazo(rec) {
+  var motivo = document.getElementById('motivo-' + rec);
+  var motivoTxt = motivo ? motivo.value.trim() : '';
+  if (!motivoTxt) {
+    alert('Por favor ingresa el motivo del rechazo.');
+    return;
+  }
+  var item = document.getElementById('ci-' + rec);
+  var badge = document.getElementById('badge-' + rec);
+  var form = document.getElementById('form-' + rec);
+
+  if (item) { item.className = 'cont-item ci-pend ci-rejected'; }
+  if (badge) { badge.className = 'badge bg-red'; badge.textContent = '✗ Rechazado'; }
+  if (form) {
+    form.innerHTML = '<div class="rejected-msg"><span style="font-size:18px">✗</span><div><div>Conciliacion rechazada</div><div style="font-weight:400;font-size:12px;margin-top:3px;color:#7B2C2C">Motivo: ' + motivoTxt + '</div></div></div>';
+  }
+}
+
+/* INIT */
+document.getElementById('s-login').classList.add('active');
+</script>
+</body>
+</html>
